@@ -1,4 +1,4 @@
-package domain.port.out;
+package com.skateboard.podcast.iam.domain.port.out;
 
 public interface PasswordHasher {
     String hash(String rawPassword);

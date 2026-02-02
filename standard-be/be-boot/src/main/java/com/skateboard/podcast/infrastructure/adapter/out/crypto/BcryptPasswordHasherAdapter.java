@@ -1,7 +1,7 @@
 package com.skateboard.podcast.infrastructure.adapter.out.crypto;
 
 
-import domain.port.out.PasswordHasher;
+import com.skateboard.podcast.iam.domain.port.out.PasswordHasher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
