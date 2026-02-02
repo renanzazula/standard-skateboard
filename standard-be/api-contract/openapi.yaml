@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: Standard BE API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Role:
+      type: string
+      enum: [GUEST, USER, ADMIN]
+
+    Provider:
+      type: string
+      enum: [MANUAL, GOOGLE, APPLE]
+
+    AuthTokens:
+      type: object
+      required: [accessToken, expiresInSeconds, refreshToken, refreshExpiresInSeconds]
+      properties:
+        accessToken: { type: string }
+        expiresInSeconds: { type: integer, example: 900 }
+        refreshToken: { type: string }
+        refreshExpiresInSeconds: { type: integer, example: 5184000 }
+
+    UserSummary:
+      type: object
+      required: [id, role, provider, email]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        provider: { $ref: '#/components/schemas/Provider' }
+
+    LoginRequest:
+      type: object
+      required: [provider, email, password, device]
+      properties:
+        provider: { $ref: '#/components/schemas/Provider' }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 6 }
+        device:
+          $ref: '#/components/schemas/DeviceInfo'
+
+    RegisterRequest:
+      type: object
+      required: [email, password, device]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 6 }
+        device:
+          $ref: '#/components/schemas/DeviceInfo'
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken, deviceId]
+      properties:
+        refreshToken: { type: string }
+        deviceId: { type: string, maxLength: 128 }
+
+    DeviceInfo:
+      type: object
+      required: [deviceId, platform]
+      properties:
+        deviceId: { type: string, maxLength: 128 }
+        deviceName: { type: string, maxLength: 128 }
+        platform: { type: string, enum: [IOS, ANDROID, WEB] }
+
+    AuthResponse:
+      type: object
+      required: [tokens, user]
+      properties:
+        tokens: { $ref: '#/components/schemas/AuthTokens' }
+        user: { $ref: '#/components/schemas/UserSummary' }
+
+    PostStatus:
+      type: string
+      enum: [DRAFT, PUBLISHED, ARCHIVED]
+
+    ImageRef:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string }
+        alt: { type: string }
+
+    BlockType:
+      type: string
+      enum: [ paragraph, heading, image, quote ]
+
+    Block:
+      type: object
+      required: [ type ]
+      properties:
+        type:
+          $ref: '#/components/schemas/BlockType'
+      discriminator:
+        propertyName: type
+        mapping:
+          paragraph: '#/components/schemas/ParagraphBlock'
+          heading: '#/components/schemas/HeadingBlock'
+          image: '#/components/schemas/ImageBlock'
+          quote: '#/components/schemas/QuoteBlock'
+
+    ParagraphBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ text ]
+          properties:
+            text:
+              type: string
+
+    HeadingBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ level, text ]
+          properties:
+            level:
+              type: integer
+              minimum: 1
+              maximum: 6
+            text:
+              type: string
+
+    ImageBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ image ]
+          properties:
+            image:
+              $ref: '#/components/schemas/ImageRef'
+
+    QuoteBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ text ]
+          properties:
+            text:
+              type: string
+
+    PostSummary:
+      type: object
+      required: [id, title, slug, status, tags]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        slug: { type: string }
+        excerpt: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        status: { $ref: '#/components/schemas/PostStatus' }
+        thumbnail: { $ref: '#/components/schemas/ImageRef' }
+        publishedAt: { type: string, format: date-time }
+
+    PostDetails:
+      type: object
+      required: [id, title, slug, status, tags, content]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        slug: { type: string }
+        excerpt: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        status: { $ref: '#/components/schemas/PostStatus' }
+        thumbnail: { $ref: '#/components/schemas/ImageRef' }
+        content:
+          type: array
+          items: { $ref: '#/components/schemas/Block' }
+        publishedAt: { type: string, format: date-time }
+
+    PagePostSummary:
+      type: object
+      required: [items, page, size]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PostSummary' }
+        page: { type: integer }
+        size: { type: integer }
+        totalItems: { type: integer }
+
+    CreatePostRequest:
+      type: object
+      required: [title, slug, content]
+      properties:
+        title: { type: string }
+        slug: { type: string }
+        excerpt: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        thumbnail: { $ref: '#/components/schemas/ImageRef' }
+        content:
+          type: array
+          items: { $ref: '#/components/schemas/Block' }
+
+    UpdatePostRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreatePostRequest'
+
+paths:
+  /public/auth/register:
+    post:
+      tags: [PublicAuth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        "200":
+          description: Registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+
+  /public/auth/login:
+    post:
+      tags: [PublicAuth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+
+  /public/auth/refresh:
+    post:
+      tags: [PublicAuth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        "200":
+          description: Refreshed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+
+  /public/auth/logout:
+    post:
+      tags: [PublicAuth]
+      security:
+        - bearerAuth: []
+      responses:
+        "204": { description: Logged out }
+
+  /public/feed:
+    get:
+      tags: [PublicFeed]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20, minimum: 1, maximum: 50 }
+      responses:
+        "200":
+          description: Feed page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PagePostSummary' }
+
+  /public/posts/{slug}:
+    get:
+      tags: [PublicFeed]
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Post details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PostDetails' }
+
+  /admin/posts:
+    post:
+      tags: [AdminPosts]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePostRequest' }
+      responses:
+        "201":
+          description: Created draft
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PostDetails' }
+
+  /admin/posts/{id}:
+    put:
+      tags: [AdminPosts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdatePostRequest' }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PostDetails' }
+
+  /admin/posts/{id}/publish:
+    post:
+      tags: [AdminPosts]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Published
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PostDetails' }

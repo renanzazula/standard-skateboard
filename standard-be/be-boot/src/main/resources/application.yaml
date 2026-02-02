@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/standarddb
+    username: standard
+    password: standard
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# JWT settings (you’ll use these in your TokenService)
+security:
+  jwt:
+    issuer: "standard-be"
+    access-token-ttl-seconds: 900
+    # for HS256 (simple start) - later move to RS256 keys
+    hmac-secret: "CHANGE_ME_TO_32+_CHARS_MINIMUM________"
+  refresh-token:
+    ttl-days: 60
+    hash-pepper: "CHANGE_ME_SERVER_PEPPER"
