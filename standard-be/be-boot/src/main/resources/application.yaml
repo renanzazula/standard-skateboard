@@ -31,3 +31,4 @@ security:
   refresh-token:
     ttl-days: 60
     hash-pepper: "CHANGE_ME_SERVER_PEPPER"
+    ttl-seconds: 5184000

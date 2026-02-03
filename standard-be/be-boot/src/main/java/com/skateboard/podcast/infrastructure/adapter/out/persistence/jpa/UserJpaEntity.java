@@ -1,4 +1,4 @@
-package com.skateboard.podcast.infrastructure.adapter.outpersistence.jpa;
+package com.skateboard.podcast.infrastructure.adapter.out.persistence.jpa;
 
 
 import jakarta.persistence.*;

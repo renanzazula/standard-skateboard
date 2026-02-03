@@ -216,6 +216,7 @@ paths:
   /public/auth/register:
     post:
       tags: [ PublicAuth ]
+      operationId: publicAuthRegister
       requestBody:
         required: true
         content:
@@ -231,6 +232,7 @@ paths:
   /public/auth/login:
     post:
       tags: [ PublicAuth ]
+      operationId: publicAuthLogin
       requestBody:
         required: true
         content:

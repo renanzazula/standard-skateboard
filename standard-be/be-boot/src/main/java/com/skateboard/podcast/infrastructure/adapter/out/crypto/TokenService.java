@@ -1,5 +1,6 @@
 package com.skateboard.podcast.infrastructure.adapter.out.crypto;
 
+import com.skateboard.podcast.iam.domain.port.out.TokenProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,13 +17,17 @@ import java.util.UUID;
  * Minimal skeleton.
  * - Access token: signed JWT-like token (HS256 simplified)
  * - Refresh token: opaque random string; stored hashed in DB (peppered SHA-256)
- *
+ * <p>
  * Replace with a proper JWT library (jjwt/nimbus) later if you want.
  */
 @Component
-public class TokenService {
+public class TokenService implements TokenProvider {
 
-    public record AccessTokenClaims(UUID userId, String role, String email, Instant expiresAt) {}
+    @Value("${security.refresh-token.ttl-days:60}")
+    private long refreshTtlDays;
+
+    @Value("${security.refresh-token.ttl-seconds}")
+    final long refreshTtlSeconds;
 
     private final String issuer;
     private final long accessTtlSeconds;
@@ -30,15 +35,42 @@ public class TokenService {
     private final String refreshPepper;
 
     public TokenService(
+            @Value("${security.rfresh-token.ttl-eseconds}") final long refreshTtlSeconds,
             @Value("${security.jwt.issuer}") final String issuer,
             @Value("${security.jwt.access-token-ttl-seconds}") final long accessTtlSeconds,
             @Value("${security.jwt.hmac-secret}") final String hmacSecret,
             @Value("${security.refresh-token.hash-pepper}") final String refreshPepper
     ) {
+        this.refreshTtlSeconds = refreshTtlSeconds;
         this.issuer = issuer;
         this.accessTtlSeconds = accessTtlSeconds;
         this.hmacSecret = hmacSecret;
         this.refreshPepper = refreshPepper;
+    }
+
+    private static byte[] hmacSha256(final byte[] data, final String secret) {
+        try {
+            final Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            return mac.doFinal(data);
+        } catch (final Exception e) {
+            throw new IllegalStateException("Cannot compute HMAC", e);
+        }
+    }
+
+    private static String sha256Hex(final String s) {
+        final byte[] digest = sha256(s.getBytes(StandardCharsets.UTF_8));
+        final StringBuilder sb = new StringBuilder(digest.length * 2);
+        for (final byte b : digest) sb.append(String.format("%02x", b));
+        return sb.toString();
+    }
+
+    private static byte[] sha256(final byte[] bytes) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(bytes);
+        } catch (final Exception e) {
+            throw new IllegalStateException("Cannot compute SHA-256", e);
+        }
     }
 
     public String createAccessToken(final UUID userId, final String role, final String email) {
@@ -93,35 +125,23 @@ public class TokenService {
         return sha256Hex(rawRefreshToken + refreshPepper);
     }
 
+    @Override
+    public long accessTtlSeconds() {
+        return 0;
+    }
+
+    @Override
+    public long refreshTtlSeconds() {
+        return 0;
+    }
+
     public String newRefreshToken() {
         // 32 bytes => ~43 chars base64url; adequate for refresh token
         final byte[] bytes = java.util.UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(sha256(bytes));
     }
 
-    private static byte[] hmacSha256(final byte[] data, final String secret) {
-        try {
-            final Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            return mac.doFinal(data);
-        } catch (final Exception e) {
-            throw new IllegalStateException("Cannot compute HMAC", e);
-        }
-    }
-
-    private static String sha256Hex(final String s) {
-        final byte[] digest = sha256(s.getBytes(StandardCharsets.UTF_8));
-        final StringBuilder sb = new StringBuilder(digest.length * 2);
-        for (final byte b : digest) sb.append(String.format("%02x", b));
-        return sb.toString();
-    }
-
-    private static byte[] sha256(final byte[] bytes) {
-        try {
-            return MessageDigest.getInstance("SHA-256").digest(bytes);
-        } catch (final Exception e) {
-            throw new IllegalStateException("Cannot compute SHA-256", e);
-        }
+    public record AccessTokenClaims(UUID userId, String role, String email, Instant expiresAt) {
     }
 
     private record Parsed(String iss, String sub, String role, String email, long exp) {
