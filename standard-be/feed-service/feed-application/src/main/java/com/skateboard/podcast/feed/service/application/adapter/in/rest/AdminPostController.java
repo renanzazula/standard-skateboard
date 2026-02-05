@@ -7,9 +7,12 @@ import com.skateboard.podcast.standardbe.api.model.CreatePostRequest;
 import com.skateboard.podcast.standardbe.api.model.PostDetails;
 import com.skateboard.podcast.standardbe.api.model.UpdatePostRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -29,6 +32,11 @@ public class AdminPostController implements AdminPostsApi {
     }
 
     @Override
+    @PostMapping(
+            value = AdminPostsApi.PATH_ADMIN_POST_CREATE,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<PostDetails> adminPostCreate(final CreatePostRequest createPostRequest) {
         final UUID authorId = requireUserId();
         final var created = adminPostService.createDraft(
@@ -44,6 +52,11 @@ public class AdminPostController implements AdminPostsApi {
     }
 
     @Override
+    @PutMapping(
+            value = AdminPostsApi.PATH_ADMIN_POST_UPDATE,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<PostDetails> adminPostUpdate(final UUID id, final UpdatePostRequest updatePostRequest) {
         final var updated = adminPostService.updateById(
                 id,
@@ -58,6 +71,10 @@ public class AdminPostController implements AdminPostsApi {
     }
 
     @Override
+    @PostMapping(
+            value = AdminPostsApi.PATH_ADMIN_POST_PUBLISH,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<PostDetails> adminPostPublish(final UUID id) {
         final var updated = adminPostService.publishById(id);
         return ResponseEntity.ok(postApiMapper.toPostDetails(updated));

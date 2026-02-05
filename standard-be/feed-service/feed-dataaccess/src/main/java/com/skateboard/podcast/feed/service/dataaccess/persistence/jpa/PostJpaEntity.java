@@ -1,6 +1,8 @@
 package com.skateboard.podcast.feed.service.dataaccess.persistence.jpa;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -21,15 +23,18 @@ public class PostJpaEntity {
     @Column(name = "excerpt", length = 500)
     private String excerpt;
 
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "tags", nullable = false, columnDefinition = "text[]")
     private String[] tags;
 
     @Column(name = "status", nullable = false, length = 16)
     private String status;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "thumbnail", columnDefinition = "jsonb")
     private String thumbnailJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", nullable = false, columnDefinition = "jsonb")
     private String contentJson;
 

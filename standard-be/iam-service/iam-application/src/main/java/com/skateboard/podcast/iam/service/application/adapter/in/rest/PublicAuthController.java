@@ -10,9 +10,11 @@ import com.skateboard.podcast.standardbe.api.model.AuthResponse;
 import com.skateboard.podcast.standardbe.api.model.LoginRequest;
 import com.skateboard.podcast.standardbe.api.model.RefreshRequest;
 import com.skateboard.podcast.standardbe.api.model.RegisterRequest;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -41,6 +43,11 @@ public class PublicAuthController implements PublicAuthApi {
     }
 
     @Override
+    @PostMapping(
+            value = PublicAuthApi.PATH_PUBLIC_AUTH_REGISTER,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<AuthResponse> publicAuthRegister(final RegisterRequest registerRequest) {
         final var result = registerService.register(
                 registerRequest.getEmail(),
@@ -52,6 +59,11 @@ public class PublicAuthController implements PublicAuthApi {
     }
 
     @Override
+    @PostMapping(
+            value = PublicAuthApi.PATH_PUBLIC_AUTH_LOGIN,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<AuthResponse> publicAuthLogin(final LoginRequest loginRequest) {
         final var result = loginService.login(
                 loginRequest.getEmail(),
@@ -63,6 +75,11 @@ public class PublicAuthController implements PublicAuthApi {
     }
 
     @Override
+    @PostMapping(
+            value = PublicAuthApi.PATH_PUBLIC_AUTH_REFRESH,
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<AuthResponse> publicAuthRefresh(final RefreshRequest refreshRequest) {
         final var result = refreshService.refresh(
                 refreshRequest.getRefreshToken(),
@@ -72,6 +89,7 @@ public class PublicAuthController implements PublicAuthApi {
     }
 
     @Override
+    @PostMapping(value = PublicAuthApi.PATH_PUBLIC_AUTH_LOGOUT)
     public ResponseEntity<Void> publicAuthLogout() {
         logoutService.logoutAllForUser(requireUserId());
         return ResponseEntity.noContent().build();
