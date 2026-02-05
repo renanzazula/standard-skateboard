@@ -17,15 +17,17 @@ import com.skateboard.podcast.standardbe.api.model.RefreshRequest;
 import com.skateboard.podcast.standardbe.api.model.RegisterRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,28 +38,40 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = PublicAuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import(AuthMapper.class)
+@ExtendWith(MockitoExtension.class)
 class PublicAuthControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
     private ObjectMapper objectMapper;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
+    @Mock
     private RegisterUseCase registerService;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
+    @Mock
     private LoginUseCase loginService;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
+    @Mock
     private RefreshUseCase refreshService;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
+    @Mock
     private LogoutUseCase logoutService;
+
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.findAndRegisterModules();
+        final PublicAuthController controller = new PublicAuthController(
+                registerService,
+                loginService,
+                refreshService,
+                logoutService,
+                new AuthMapper()
+        );
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
+                .build();
+    }
 
     @AfterEach
     void clearSecurityContext() {

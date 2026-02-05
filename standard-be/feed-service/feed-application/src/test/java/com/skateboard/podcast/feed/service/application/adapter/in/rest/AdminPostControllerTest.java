@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skateboard.podcast.domain.security.CurrentUser;
 import com.skateboard.podcast.feed.service.application.dto.PostDetailsView;
 import com.skateboard.podcast.feed.service.application.port.in.AdminPostUseCase;
-import com.skateboard.podcast.feed.service.application.port.in.PublicFeedUseCase;
 import com.skateboard.podcast.standardbe.api.model.BlockType;
 import com.skateboard.podcast.standardbe.api.model.CreatePostRequest;
 import com.skateboard.podcast.standardbe.api.model.ImageRef;
@@ -12,15 +11,17 @@ import com.skateboard.podcast.standardbe.api.model.ParagraphBlock;
 import com.skateboard.podcast.standardbe.api.model.UpdatePostRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.List;
@@ -34,24 +35,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = AdminPostController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import(PostApiMapper.class)
+@ExtendWith(MockitoExtension.class)
 class AdminPostControllerTest {
 
     private static final String CONTENT_JSON = "[{\"type\":\"paragraph\",\"text\":\"Hello\"}]";
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
     private ObjectMapper objectMapper;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
+    @Mock
     private AdminPostUseCase adminPostService;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
-    private PublicFeedUseCase publicFeedService;
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.findAndRegisterModules();
+        final PostApiMapper postApiMapper = new PostApiMapper(objectMapper);
+        final AdminPostController controller = new AdminPostController(adminPostService, postApiMapper);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
+                .build();
+    }
 
     @AfterEach
     void clearSecurityContext() {

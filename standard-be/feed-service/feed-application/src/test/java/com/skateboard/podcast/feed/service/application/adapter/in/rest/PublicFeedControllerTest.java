@@ -3,16 +3,17 @@ package com.skateboard.podcast.feed.service.application.adapter.in.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skateboard.podcast.feed.service.application.dto.PostDetailsView;
 import com.skateboard.podcast.feed.service.application.dto.PostSummaryView;
-import com.skateboard.podcast.feed.service.application.port.in.AdminPostUseCase;
 import com.skateboard.podcast.feed.service.application.port.in.PublicFeedUseCase;
 import com.skateboard.podcast.standardbe.api.model.ImageRef;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,24 +25,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = PublicFeedController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import(PostApiMapper.class)
+@ExtendWith(MockitoExtension.class)
 class PublicFeedControllerTest {
 
     private static final String CONTENT_JSON = "[{\"type\":\"paragraph\",\"text\":\"Hello\"}]";
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
     private ObjectMapper objectMapper;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
+    @Mock
     private PublicFeedUseCase publicFeedService;
 
-    @org.springframework.boot.test.mock.mockito.MockBean
-    private AdminPostUseCase adminPostService;
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.findAndRegisterModules();
+        final PostApiMapper postApiMapper = new PostApiMapper(objectMapper);
+        final PublicFeedController controller = new PublicFeedController(publicFeedService, postApiMapper);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
+                .build();
+    }
 
     @Test
     void publicFeedList_returnsPage() throws Exception {
