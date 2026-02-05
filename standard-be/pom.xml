@@ -22,11 +22,10 @@
 
     <modules>
         <module>api-contract</module>
-        <module>shared</module>
-        <module>iam</module>
-        <module>feed</module>
-        <module>adminconfig</module>
-        <module>be-boot</module>
+        <module>common</module>
+        <module>iam-service</module>
+        <module>feed-service</module>
+        <module>standard-container</module>
     </modules>
 
     <properties>
