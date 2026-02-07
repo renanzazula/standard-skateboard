@@ -7,7 +7,9 @@ import java.util.Locale;
 public enum Provider {
     MANUAL,
     GOOGLE,
-    APPLE;
+    APPLE,
+    FACEBOOK,
+    PASSCODE;
 
     public static Provider from(final String raw) {
         if (raw == null || raw.isBlank()) {

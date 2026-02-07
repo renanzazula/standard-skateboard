@@ -33,6 +33,20 @@ public class PostRepositoryAdapter implements PostRepository {
     }
 
     @Override
+    public List<PostRecord> findAll(final int page, final int size) {
+        return repo.findAllByOrderByUpdatedAtDesc(PageRequest.of(page, size))
+                .map(PostRepositoryAdapter::toRecord)
+                .getContent();
+    }
+
+    @Override
+    public List<PostRecord> findByStatus(final PostStatus status, final int page, final int size) {
+        return repo.findByStatusOrderByUpdatedAtDesc(status.name(), PageRequest.of(page, size))
+                .map(PostRepositoryAdapter::toRecord)
+                .getContent();
+    }
+
+    @Override
     public List<PostRecord> findPublished(final int page, final int size) {
         return repo.findByStatusOrderByPublishedAtDesc(
                         PostStatus.PUBLISHED.name(),
@@ -59,6 +73,16 @@ public class PostRepositoryAdapter implements PostRepository {
         e.setPublishedAt(post.publishedAt());
         repo.save(e);
         return post;
+    }
+
+    @Override
+    public void deleteById(final java.util.UUID id) {
+        repo.deleteById(id);
+    }
+
+    @Override
+    public void deleteAll() {
+        repo.deleteAll();
     }
 
     private static PostRecord toRecord(final PostJpaEntity e) {

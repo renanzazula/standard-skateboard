@@ -19,7 +19,7 @@ components:
 
     Provider:
       type: string
-      enum: [ MANUAL, GOOGLE, APPLE ]
+      enum: [ MANUAL, GOOGLE, APPLE, FACEBOOK, PASSCODE ]
 
     AuthTokens:
       type: object
@@ -38,6 +38,8 @@ components:
         email: { type: string, format: email }
         role: { $ref: '#/components/schemas/Role' }
         provider: { $ref: '#/components/schemas/Provider' }
+        name: { type: string }
+        avatarUrl: { type: string, format: uri }
 
     LoginRequest:
       type: object
@@ -55,6 +57,23 @@ components:
       properties:
         email: { type: string, format: email }
         password: { type: string, minLength: 6 }
+        device:
+          $ref: '#/components/schemas/DeviceInfo'
+
+    AdminPasscodeLoginRequest:
+      type: object
+      required: [ passcode, device ]
+      properties:
+        passcode: { type: string, minLength: 4 }
+        device:
+          $ref: '#/components/schemas/DeviceInfo'
+
+    SocialLoginRequest:
+      type: object
+      required: [ provider, device ]
+      properties:
+        provider: { $ref: '#/components/schemas/Provider' }
+        token: { type: string }
         device:
           $ref: '#/components/schemas/DeviceInfo'
 
@@ -91,9 +110,40 @@ components:
         url: { type: string }
         alt: { type: string }
 
+    EmbedPlatform:
+      type: string
+      enum: [ youtube, vimeo ]
+
+    SpotifyType:
+      type: string
+      enum: [ track, album, playlist, episode, show ]
+
+    SplashMediaType:
+      type: string
+      enum: [ image, video ]
+
+    SplashConfig:
+      type: object
+      required: [ enabled, mediaType, mediaUrl, duration, showCloseButton, closeButtonDelay ]
+      properties:
+        enabled: { type: boolean }
+        mediaType: { $ref: '#/components/schemas/SplashMediaType' }
+        mediaUrl: { type: string, nullable: true }
+        duration: { type: integer, minimum: 0 }
+        showCloseButton: { type: boolean }
+        closeButtonDelay: { type: integer, minimum: 0 }
+
+    AppConfig:
+      type: object
+      required: [ socialLoginEnabled, postsPerPage, splash ]
+      properties:
+        socialLoginEnabled: { type: boolean }
+        postsPerPage: { type: integer, minimum: 5, maximum: 50 }
+        splash: { $ref: '#/components/schemas/SplashConfig' }
+
     BlockType:
       type: string
-      enum: [ paragraph, heading, image, quote ]
+      enum: [ paragraph, heading, image, quote, video, embed, gallery, link, spotify ]
 
     Block:
       type: object
@@ -108,6 +158,11 @@ components:
           heading: '#/components/schemas/HeadingBlock'
           image: '#/components/schemas/ImageBlock'
           quote: '#/components/schemas/QuoteBlock'
+          video: '#/components/schemas/VideoBlock'
+          embed: '#/components/schemas/EmbedBlock'
+          gallery: '#/components/schemas/GalleryBlock'
+          link: '#/components/schemas/LinkBlock'
+          spotify: '#/components/schemas/SpotifyBlock'
 
     ParagraphBlock:
       allOf:
@@ -116,6 +171,8 @@ components:
           required: [ text ]
           properties:
             text:
+              type: string
+            html:
               type: string
 
     HeadingBlock:
@@ -148,6 +205,56 @@ components:
           properties:
             text:
               type: string
+            author:
+              type: string
+
+    VideoBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ url ]
+          properties:
+            url: { type: string }
+            poster: { type: string }
+
+    EmbedBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ platform, id ]
+          properties:
+            platform: { $ref: '#/components/schemas/EmbedPlatform' }
+            id: { type: string }
+
+    GalleryBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ urls ]
+          properties:
+            urls:
+              type: array
+              items: { type: string }
+
+    LinkBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ url ]
+          properties:
+            url: { type: string }
+            title: { type: string }
+            description: { type: string }
+
+    SpotifyBlock:
+      allOf:
+        - $ref: '#/components/schemas/Block'
+        - type: object
+          required: [ url, spotifyType, spotifyId ]
+          properties:
+            url: { type: string }
+            spotifyType: { $ref: '#/components/schemas/SpotifyType' }
+            spotifyId: { type: string }
 
     PostSummary:
       type: object
@@ -163,6 +270,8 @@ components:
         status: { $ref: '#/components/schemas/PostStatus' }
         thumbnail: { $ref: '#/components/schemas/ImageRef' }
         publishedAt: { type: string, format: date-time }
+        date: { type: string, nullable: true }
+        duration: { type: string, nullable: true }
 
     PostDetails:
       type: object
@@ -181,6 +290,11 @@ components:
           type: array
           items: { $ref: '#/components/schemas/Block' }
         publishedAt: { type: string, format: date-time }
+        date: { type: string, nullable: true }
+        duration: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        createdBy: { type: string }
 
     PagePostSummary:
       type: object
@@ -192,6 +306,27 @@ components:
         page: { type: integer }
         size: { type: integer }
         totalItems: { type: integer }
+
+    PodcastImportItem:
+      type: object
+      required: [ title ]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        date: { type: string }
+        duration: { type: string, nullable: true }
+        url: { type: string }
+        youtube_id: { type: string, nullable: true }
+        youtube_url: { type: string, nullable: true }
+        thumbnail: { type: string, nullable: true }
+
+    ImportPostsRequest:
+      type: object
+      required: [ items ]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PodcastImportItem' }
 
     CreatePostRequest:
       type: object
@@ -207,6 +342,8 @@ components:
         content:
           type: array
           items: { $ref: '#/components/schemas/Block' }
+        date: { type: string, nullable: true }
+        duration: { type: string, nullable: true }
 
     UpdatePostRequest:
       allOf:
@@ -238,6 +375,38 @@ paths:
         content:
           application/json:
             schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+
+  /public/auth/admin-passcode:
+    post:
+      tags: [ PublicAuth ]
+      operationId: publicAuthAdminPasscode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminPasscodeLoginRequest' }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+
+  /public/auth/social:
+    post:
+      tags: [ PublicAuth ]
+      operationId: publicAuthSocial
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SocialLoginRequest' }
       responses:
         "200":
           description: Logged in
@@ -305,7 +474,68 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/PostDetails' }
 
+  /public/app-config:
+    get:
+      tags: [ PublicConfig ]
+      operationId: publicAppConfig
+      responses:
+        "200":
+          description: Public app configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppConfig' }
+
+  /admin/app-config:
+    get:
+      tags: [ AdminConfig ]
+      operationId: adminAppConfigGet
+      security:
+        - bearerAuth: [ ]
+      responses:
+        "200":
+          description: Admin app configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppConfig' }
+    put:
+      tags: [ AdminConfig ]
+      operationId: adminAppConfigUpdate
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AppConfig' }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppConfig' }
+
   /admin/posts:
+    get:
+      tags: [ AdminPosts ]
+      operationId: adminPostList
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20, minimum: 1, maximum: 50 }
+        - in: query
+          name: status
+          schema: { $ref: '#/components/schemas/PostStatus' }
+      responses:
+        "200":
+          description: Admin post page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PagePostSummary' }
     post:
       tags: [ AdminPosts ]
       operationId: adminPostCreate
@@ -324,6 +554,22 @@ paths:
               schema: { $ref: '#/components/schemas/PostDetails' }
 
   /admin/posts/{id}:
+    get:
+      tags: [ AdminPosts ]
+      operationId: adminPostGet
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Post details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PostDetails' }
     put:
       tags: [ AdminPosts ]
       operationId: adminPostUpdate
@@ -345,6 +591,19 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PostDetails' }
+    delete:
+      tags: [ AdminPosts ]
+      operationId: adminPostDelete
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Deleted
 
   /admin/posts/{id}/publish:
     post:
@@ -363,3 +622,33 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PostDetails' }
+
+  /admin/posts/import:
+    post:
+      tags: [ AdminPosts ]
+      operationId: adminPostImport
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportPostsRequest' }
+      responses:
+        "200":
+          description: Imported
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PostSummary' }
+
+  /admin/posts/reset:
+    post:
+      tags: [ AdminPosts ]
+      operationId: adminPostReset
+      security:
+        - bearerAuth: [ ]
+      responses:
+        "204":
+          description: Reset complete

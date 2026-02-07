@@ -7,10 +7,12 @@ import com.skateboard.podcast.domain.valueobject.Provider;
 import com.skateboard.podcast.domain.valueobject.Role;
 import com.skateboard.podcast.domain.valueobject.UserId;
 import com.skateboard.podcast.iam.service.application.dto.AuthResult;
+import com.skateboard.podcast.iam.service.application.port.in.AdminPasscodeLoginUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.LoginUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.LogoutUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.RefreshUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.RegisterUseCase;
+import com.skateboard.podcast.iam.service.application.port.in.SocialLoginUseCase;
 import com.skateboard.podcast.standardbe.api.model.DeviceInfo;
 import com.skateboard.podcast.standardbe.api.model.LoginRequest;
 import com.skateboard.podcast.standardbe.api.model.RefreshRequest;
@@ -52,6 +54,12 @@ class PublicAuthControllerTest {
     private LoginUseCase loginService;
 
     @Mock
+    private AdminPasscodeLoginUseCase adminPasscodeLoginService;
+
+    @Mock
+    private SocialLoginUseCase socialLoginService;
+
+    @Mock
     private RefreshUseCase refreshService;
 
     @Mock
@@ -64,6 +72,8 @@ class PublicAuthControllerTest {
         final PublicAuthController controller = new PublicAuthController(
                 registerService,
                 loginService,
+                adminPasscodeLoginService,
+                socialLoginService,
                 refreshService,
                 logoutService,
                 new AuthMapper()

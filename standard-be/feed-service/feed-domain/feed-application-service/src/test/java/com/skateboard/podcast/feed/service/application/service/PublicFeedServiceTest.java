@@ -75,6 +75,18 @@ class PublicFeedServiceTest {
         }
 
         @Override
+        public List<PostRecord> findAll(final int page, final int size) {
+            return List.copyOf(byId.values());
+        }
+
+        @Override
+        public List<PostRecord> findByStatus(final PostStatus status, final int page, final int size) {
+            return byId.values().stream()
+                    .filter(post -> post.status() == status)
+                    .toList();
+        }
+
+        @Override
         public List<PostRecord> findPublished(final int page, final int size) {
             return bySlug.values().stream()
                     .filter(post -> post.status() == PostStatus.PUBLISHED)
@@ -86,6 +98,20 @@ class PublicFeedServiceTest {
             bySlug.put(post.slug().value(), post);
             byId.put(post.id(), post);
             return post;
+        }
+
+        @Override
+        public void deleteById(final UUID id) {
+            final PostRecord existing = byId.remove(id);
+            if (existing != null) {
+                bySlug.remove(existing.slug().value());
+            }
+        }
+
+        @Override
+        public void deleteAll() {
+            byId.clear();
+            bySlug.clear();
         }
     }
 }

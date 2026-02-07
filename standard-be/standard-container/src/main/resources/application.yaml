@@ -1,7 +1,11 @@
 server:
   port: 8080
+  servlet:
+    context-path: /api/v1
 
 spring:
+  application:
+    name: standard-container
   datasource:
     url: jdbc:postgresql://localhost:5432/standarddb
     username: standard
@@ -20,7 +24,22 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+app:
+  environment: ${APP_ENV:local}
+
+logging:
+  logstash:
+    host: ${LOGSTASH_HOST:localhost}
+    port: ${LOGSTASH_PORT:5000}
 
 # JWT settings (you’ll use these in your TokenService)
 security:
@@ -33,3 +52,6 @@ security:
     ttl-days: 60
     hash-pepper: "CHANGE_ME_SERVER_PEPPER"
     ttl-seconds: 5184000
+  admin:
+    passcode: "admin123"
+    email: "admin@example.com"

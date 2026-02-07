@@ -9,5 +9,7 @@ import java.util.UUID;
 
 public interface SpringDataPostRepository extends JpaRepository<PostJpaEntity, UUID> {
     Page<PostJpaEntity> findByStatusOrderByPublishedAtDesc(String status, Pageable pageable);
+    Page<PostJpaEntity> findByStatusOrderByUpdatedAtDesc(String status, Pageable pageable);
+    Page<PostJpaEntity> findAllByOrderByUpdatedAtDesc(Pageable pageable);
     Optional<PostJpaEntity> findBySlug(String slug);
 }

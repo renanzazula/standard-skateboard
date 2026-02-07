@@ -1,15 +1,20 @@
 package com.skateboard.podcast.iam.service.application.adapter.in.rest;
 
 import com.skateboard.podcast.domain.security.CurrentUser;
+import com.skateboard.podcast.domain.valueobject.Provider;
+import com.skateboard.podcast.iam.service.application.port.in.AdminPasscodeLoginUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.LoginUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.LogoutUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.RefreshUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.RegisterUseCase;
+import com.skateboard.podcast.iam.service.application.port.in.SocialLoginUseCase;
 import com.skateboard.podcast.standardbe.api.PublicAuthApi;
+import com.skateboard.podcast.standardbe.api.model.AdminPasscodeLoginRequest;
 import com.skateboard.podcast.standardbe.api.model.AuthResponse;
 import com.skateboard.podcast.standardbe.api.model.LoginRequest;
 import com.skateboard.podcast.standardbe.api.model.RefreshRequest;
 import com.skateboard.podcast.standardbe.api.model.RegisterRequest;
+import com.skateboard.podcast.standardbe.api.model.SocialLoginRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,6 +29,8 @@ public class PublicAuthController implements PublicAuthApi {
 
     private final RegisterUseCase registerService;
     private final LoginUseCase loginService;
+    private final AdminPasscodeLoginUseCase adminPasscodeLoginService;
+    private final SocialLoginUseCase socialLoginService;
     private final RefreshUseCase refreshService;
     private final LogoutUseCase logoutService;
     private final AuthMapper authMapper;
@@ -31,12 +38,16 @@ public class PublicAuthController implements PublicAuthApi {
     public PublicAuthController(
             final RegisterUseCase registerService,
             final LoginUseCase loginService,
+            final AdminPasscodeLoginUseCase adminPasscodeLoginService,
+            final SocialLoginUseCase socialLoginService,
             final RefreshUseCase refreshService,
             final LogoutUseCase logoutService,
             final AuthMapper authMapper
     ) {
         this.registerService = registerService;
         this.loginService = loginService;
+        this.adminPasscodeLoginService = adminPasscodeLoginService;
+        this.socialLoginService = socialLoginService;
         this.refreshService = refreshService;
         this.logoutService = logoutService;
         this.authMapper = authMapper;
@@ -70,6 +81,40 @@ public class PublicAuthController implements PublicAuthApi {
                 loginRequest.getPassword(),
                 loginRequest.getDevice().getDeviceId(),
                 loginRequest.getDevice().getDeviceName()
+        );
+        return ResponseEntity.ok(authMapper.toAuthResponse(result));
+    }
+
+    @Override
+    @PostMapping(
+            value = "/public/auth/admin-passcode",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<AuthResponse> publicAuthAdminPasscode(
+            final AdminPasscodeLoginRequest adminPasscodeLoginRequest
+    ) {
+        final var result = adminPasscodeLoginService.login(
+                adminPasscodeLoginRequest.getPasscode(),
+                adminPasscodeLoginRequest.getDevice().getDeviceId(),
+                adminPasscodeLoginRequest.getDevice().getDeviceName()
+        );
+        return ResponseEntity.ok(authMapper.toAuthResponse(result));
+    }
+
+    @Override
+    @PostMapping(
+            value = "/public/auth/social",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<AuthResponse> publicAuthSocial(final SocialLoginRequest socialLoginRequest) {
+        final Provider provider = Provider.from(socialLoginRequest.getProvider().name());
+        final var result = socialLoginService.login(
+                provider,
+                socialLoginRequest.getToken(),
+                socialLoginRequest.getDevice().getDeviceId(),
+                socialLoginRequest.getDevice().getDeviceName()
         );
         return ResponseEntity.ok(authMapper.toAuthResponse(result));
     }

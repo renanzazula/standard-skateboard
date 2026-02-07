@@ -28,5 +28,43 @@ services:
       postgres:
         condition: service_healthy
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    profiles: [ "local", "dev" ]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.4
+    profiles: [ "local", "dev" ]
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    volumes:
+      - ./observability/logstash/pipeline:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    profiles: [ "local", "dev" ]
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
 volumes:
   pgdata:
+  esdata:

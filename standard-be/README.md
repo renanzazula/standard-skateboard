@@ -56,3 +56,14 @@ mvn test
 ```
 mvn -pl standard-container spring-boot:run
 ```
+
+## Observability (optional)
+Start Elasticsearch + Logstash + Kibana for local/dev.
+
+```
+docker compose --profile local up -d elasticsearch logstash kibana
+```
+
+If the app runs on the host, keep `LOGSTASH_HOST=localhost`. If you run it in a container on the same compose network, set `LOGSTASH_HOST=logstash`.
+
+Prometheus metrics are exposed at `/actuator/prometheus`.

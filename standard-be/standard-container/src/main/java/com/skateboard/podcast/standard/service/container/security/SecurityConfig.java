@@ -28,14 +28,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // public endpoints
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/public/feed").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/public/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/public/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/public/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/public/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/feed").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/public/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/public/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/public/auth/admin-passcode").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/public/auth/social").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/public/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/app-config").permitAll()
 
                         // admin endpoints
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // everything else requires auth
                         .anyRequest().authenticated()

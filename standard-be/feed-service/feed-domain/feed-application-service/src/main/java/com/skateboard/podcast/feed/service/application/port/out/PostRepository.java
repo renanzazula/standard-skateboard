@@ -15,9 +15,17 @@ public interface PostRepository {
 
     Optional<PostRecord> findById(UUID id);
 
+    List<PostRecord> findAll(int page, int size);
+
+    List<PostRecord> findByStatus(PostStatus status, int page, int size);
+
     List<PostRecord> findPublished(int page, int size);
 
     PostRecord save(PostRecord post);
+
+    void deleteById(UUID id);
+
+    void deleteAll();
 
     record PostRecord(
             UUID id,
