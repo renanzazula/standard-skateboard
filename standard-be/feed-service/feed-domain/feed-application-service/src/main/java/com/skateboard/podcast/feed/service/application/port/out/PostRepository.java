@@ -21,11 +21,15 @@ public interface PostRepository {
 
     List<PostRecord> findPublished(int page, int size);
 
+    FeedStats fetchPublishedFeedStats();
+
     PostRecord save(PostRecord post);
 
     void deleteById(UUID id);
 
     void deleteAll();
+
+    record FeedStats(Instant lastUpdatedAt, long totalCount) {}
 
     record PostRecord(
             UUID id,

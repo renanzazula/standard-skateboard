@@ -2,8 +2,10 @@ package com.skateboard.podcast.feed.service.application.service;
 
 import com.skateboard.podcast.feed.service.application.dto.ImportPostCommand;
 import com.skateboard.podcast.feed.service.application.dto.PostDetailsView;
+import com.skateboard.podcast.feed.service.application.dto.PostEvent;
 import com.skateboard.podcast.feed.service.application.dto.PostSummaryView;
 import com.skateboard.podcast.feed.service.application.port.in.AdminPostUseCase;
+import com.skateboard.podcast.feed.service.application.port.out.FeedEventPublisher;
 import com.skateboard.podcast.feed.service.application.port.out.PostRepository;
 import com.skateboard.podcast.domain.exception.NotFoundException;
 import com.skateboard.podcast.domain.exception.ValidationException;
@@ -21,9 +23,14 @@ import java.util.UUID;
 public class AdminPostService implements AdminPostUseCase {
 
     private final PostRepository postRepository;
+    private final FeedEventPublisher feedEventPublisher;
 
-    public AdminPostService(final PostRepository postRepository) {
+    public AdminPostService(
+            final PostRepository postRepository,
+            final FeedEventPublisher feedEventPublisher
+    ) {
         this.postRepository = postRepository;
+        this.feedEventPublisher = feedEventPublisher;
     }
 
     @Override
@@ -74,6 +81,9 @@ public class AdminPostService implements AdminPostUseCase {
                 null
         );
         final var saved = postRepository.save(record);
+        if (saved.status() == PostStatus.PUBLISHED) {
+            publishPostEvent("post.created", saved);
+        }
         return toDetails(saved);
     }
 
@@ -112,6 +122,9 @@ public class AdminPostService implements AdminPostUseCase {
                 existing.publishedAt()
         );
         final var saved = postRepository.save(updated);
+        if (saved.status() == PostStatus.PUBLISHED) {
+            publishPostEvent("post.updated", saved);
+        }
         return toDetails(saved);
     }
 
@@ -137,15 +150,23 @@ public class AdminPostService implements AdminPostUseCase {
                 publishedAt
         );
         final var saved = postRepository.save(updated);
+        publishPostEvent("post.published", saved);
         return toDetails(saved);
     }
 
     @Override
     public void deleteById(final UUID id) {
-        if (postRepository.findById(id).isEmpty()) {
-            throw new NotFoundException("post not found");
-        }
+        final var existing = postRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("post not found"));
         postRepository.deleteById(id);
+        if (existing.status() == PostStatus.PUBLISHED) {
+            feedEventPublisher.publishPostEvent(new PostEvent(
+                    "post.deleted",
+                    existing.id(),
+                    existing.slug().value(),
+                    Instant.now()
+            ));
+        }
     }
 
     @Override
@@ -154,14 +175,17 @@ public class AdminPostService implements AdminPostUseCase {
             return List.of();
         }
         final Set<String> seenSlugs = new HashSet<>();
-        return items.stream()
+        final List<PostSummaryView> results = items.stream()
                 .map(item -> importOne(item, authorId, seenSlugs))
                 .toList();
+        feedEventPublisher.publishFeedUpdated(Instant.now());
+        return results;
     }
 
     @Override
     public void resetAll() {
         postRepository.deleteAll();
+        feedEventPublisher.publishFeedUpdated(Instant.now());
     }
 
     private static List<Tag> toTagValues(final List<String> tags) {
@@ -249,5 +273,14 @@ public class AdminPostService implements AdminPostUseCase {
                 post.thumbnailJson(),
                 post.publishedAt()
         );
+    }
+
+    private void publishPostEvent(final String type, final PostRepository.PostRecord post) {
+        feedEventPublisher.publishPostEvent(new PostEvent(
+                type,
+                post.id(),
+                post.slug().value(),
+                post.updatedAt()
+        ));
     }
 }

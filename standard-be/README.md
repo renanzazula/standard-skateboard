@@ -64,6 +64,32 @@ Start Elasticsearch + Logstash + Kibana for local/dev.
 docker compose --profile local up -d elasticsearch logstash kibana
 ```
 
+Start Postgres + pgAdmin with the same profile pattern.
+
+```
+docker compose --profile local up -d postgres pgadmin
+```
+
 If the app runs on the host, keep `LOGSTASH_HOST=localhost`. If you run it in a container on the same compose network, set `LOGSTASH_HOST=logstash`.
 
+Dev profile example:
+
+```
+docker compose --profile dev up -d postgres pgadmin elasticsearch logstash kibana
+```
+
+Containerized app env example:
+
+```
+SPRING_PROFILES_ACTIVE=dev
+APP_ENV=dev
+LOGSTASH_HOST=logstash
+```
+
 Prometheus metrics are exposed at `/actuator/prometheus`.
+
+## Feed sync (events)
+Clients can subscribe to `/ws/feed` (plain JSON WebSocket) and refresh the feed on
+events with type containing `feed` or `post`. The `/public/feed` endpoint supports
+conditional GET with `ETag` and `Last-Modified`, returning `304 Not Modified` when
+unchanged.

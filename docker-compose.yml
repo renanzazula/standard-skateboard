@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: standard-postgres
+    profiles: [ "local", "dev" ]
     environment:
       POSTGRES_DB: standarddb
       POSTGRES_USER: standard
@@ -19,6 +20,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: standard-pgadmin
+    profiles: [ "local", "dev" ]
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@local.dev
       PGADMIN_DEFAULT_PASSWORD: admin

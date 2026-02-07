@@ -9,6 +9,7 @@ import com.skateboard.podcast.domain.valueobject.Tag;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,13 @@ public class PostRepositoryAdapter implements PostRepository {
                 )
                 .map(PostRepositoryAdapter::toRecord)
                 .getContent();
+    }
+
+    @Override
+    public FeedStats fetchPublishedFeedStats() {
+        final Instant lastUpdatedAt = repo.findMaxUpdatedAtByStatus(PostStatus.PUBLISHED.name());
+        final long totalCount = repo.countByStatus(PostStatus.PUBLISHED.name());
+        return new FeedStats(lastUpdatedAt, totalCount);
     }
 
     @Override

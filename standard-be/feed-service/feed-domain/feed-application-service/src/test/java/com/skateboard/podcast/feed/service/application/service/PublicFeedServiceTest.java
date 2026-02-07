@@ -94,6 +94,18 @@ class PublicFeedServiceTest {
         }
 
         @Override
+        public FeedStats fetchPublishedFeedStats() {
+            final var published = bySlug.values().stream()
+                    .filter(post -> post.status() == PostStatus.PUBLISHED)
+                    .toList();
+            final Instant lastUpdatedAt = published.stream()
+                    .map(PostRecord::updatedAt)
+                    .max(Instant::compareTo)
+                    .orElse(null);
+            return new FeedStats(lastUpdatedAt, published.size());
+        }
+
+        @Override
         public PostRecord save(final PostRecord post) {
             bySlug.put(post.slug().value(), post);
             byId.put(post.id(), post);
