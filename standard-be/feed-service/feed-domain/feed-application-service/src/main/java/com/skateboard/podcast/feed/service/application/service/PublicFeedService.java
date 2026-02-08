@@ -6,7 +6,7 @@ import com.skateboard.podcast.feed.service.application.dto.FeedItemSummaryView;
 import com.skateboard.podcast.feed.service.application.dto.FeedVersion;
 import com.skateboard.podcast.feed.service.application.port.in.PublicFeedUseCase;
 import com.skateboard.podcast.feed.service.application.port.out.PostRepository;
-import com.skateboard.podcast.feed.service.events.application.port.out.EventRepository;
+import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventRepository;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,11 +19,11 @@ public class PublicFeedService implements PublicFeedUseCase {
     private static final String TYPE_EVENT = "EVENT";
 
     private final PostRepository postRepository;
-    private final EventRepository eventRepository;
+    private final FeedEventRepository eventRepository;
 
     public PublicFeedService(
             final PostRepository postRepository,
-            final EventRepository eventRepository
+            final FeedEventRepository eventRepository
     ) {
         this.postRepository = postRepository;
         this.eventRepository = eventRepository;
@@ -35,13 +35,13 @@ public class PublicFeedService implements PublicFeedUseCase {
 
         final int fetchSize = (page + 1) * size;
         final List<PostRepository.PostRecord> posts = postRepository.findPublished(0, fetchSize);
-        final List<EventRepository.EventRecord> events = eventRepository.findPublished(0, fetchSize);
+        final List<FeedEventRepository.FeedEventRecord> events = eventRepository.findPublished(0, fetchSize);
 
         final List<FeedItemSummaryView> items = new ArrayList<>(posts.size() + events.size());
         for (final PostRepository.PostRecord post : posts) {
             items.add(toPostItem(post));
         }
-        for (final EventRepository.EventRecord event : events) {
+        for (final FeedEventRepository.FeedEventRecord event : events) {
             items.add(toEventItem(event));
         }
 
@@ -60,7 +60,7 @@ public class PublicFeedService implements PublicFeedUseCase {
         validatePageAndSize(page, size);
 
         final PostRepository.FeedStats postStats = postRepository.fetchPublishedFeedStats();
-        final EventRepository.EventStats eventStats = eventRepository.fetchPublishedStats();
+        final FeedEventRepository.FeedEventStats eventStats = eventRepository.fetchPublishedStats();
 
         final Instant postUpdatedAt = postStats.lastUpdatedAt() == null
                 ? Instant.EPOCH
@@ -103,7 +103,7 @@ public class PublicFeedService implements PublicFeedUseCase {
         );
     }
 
-    private static FeedItemSummaryView toEventItem(final EventRepository.EventRecord event) {
+    private static FeedItemSummaryView toEventItem(final FeedEventRepository.FeedEventRecord event) {
         return new FeedItemSummaryView(
                 TYPE_EVENT,
                 event.id(),

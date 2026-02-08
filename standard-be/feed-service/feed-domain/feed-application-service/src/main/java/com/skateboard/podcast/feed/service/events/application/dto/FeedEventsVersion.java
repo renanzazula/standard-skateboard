@@ -5,7 +5,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
-public record EventsVersion(String etag, Instant lastUpdatedAt) {
+public record FeedEventsVersion(String etag, Instant lastUpdatedAt) {
 
     public long lastModifiedEpochMillis() {
         return lastUpdatedAt.toEpochMilli();

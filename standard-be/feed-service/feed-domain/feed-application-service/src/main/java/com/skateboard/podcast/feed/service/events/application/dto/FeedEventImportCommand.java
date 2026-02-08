@@ -3,7 +3,7 @@ package com.skateboard.podcast.feed.service.events.application.dto;
 import java.time.Instant;
 import java.util.List;
 
-public record ImportEventCommand(
+public record FeedEventImportCommand(
         String title,
         String slug,
         String excerpt,

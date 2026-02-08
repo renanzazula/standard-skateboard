@@ -5,7 +5,7 @@ import com.skateboard.podcast.feed.service.application.port.in.PublicPostsUseCas
 import com.skateboard.podcast.feed.service.application.service.PublicFeedService;
 import com.skateboard.podcast.feed.service.application.service.PublicPostsService;
 import com.skateboard.podcast.feed.service.application.port.out.PostRepository;
-import com.skateboard.podcast.feed.service.events.application.port.out.EventRepository;
+import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,7 +15,7 @@ public class FeedBeansConfig {
     @Bean
     public PublicFeedUseCase publicFeedService(
             final PostRepository postRepository,
-            final EventRepository eventRepository
+            final FeedEventRepository eventRepository
     ) {
         return new PublicFeedService(postRepository, eventRepository);
     }

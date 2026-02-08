@@ -101,7 +101,7 @@ components:
 
     PostStatus:
       type: string
-      enum: [ DRAFT, PUBLISHED, ARCHIVED ]
+      enum: [ DRAFT, SCHEDULED, PUBLISHED, ARCHIVED ]
 
     FeedItemType:
       type: string
@@ -109,7 +109,7 @@ components:
 
     FeedItemStatus:
       type: string
-      enum: [ DRAFT, PUBLISHED, ARCHIVED ]
+      enum: [ DRAFT, SCHEDULED, PUBLISHED, CANCELLED, ARCHIVED ]
 
     ImageRef:
       type: object
@@ -349,7 +349,7 @@ components:
 
     EventStatus:
       type: string
-      enum: [ DRAFT, PUBLISHED, ARCHIVED ]
+      enum: [ DRAFT, SCHEDULED, PUBLISHED, CANCELLED, ARCHIVED ]
 
     EventSummary:
       type: object
@@ -595,9 +595,25 @@ paths:
       responses:
         "200":
           description: Feed page
+          headers:
+            ETag:
+              description: Entity tag for conditional requests.
+              schema: { type: string }
+            Last-Modified:
+              description: Last modification timestamp for conditional requests.
+              schema: { type: string, format: date-time }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PageFeedItemSummary' }
+        "304":
+          description: Not modified
+          headers:
+            ETag:
+              description: Entity tag for conditional requests.
+              schema: { type: string }
+            Last-Modified:
+              description: Last modification timestamp for conditional requests.
+              schema: { type: string, format: date-time }
 
   /public/posts/{slug}:
     get:
@@ -629,9 +645,25 @@ paths:
       responses:
         "200":
           description: Events page
+          headers:
+            ETag:
+              description: Entity tag for conditional requests.
+              schema: { type: string }
+            Last-Modified:
+              description: Last modification timestamp for conditional requests.
+              schema: { type: string, format: date-time }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PageEventSummary' }
+        "304":
+          description: Not modified
+          headers:
+            ETag:
+              description: Entity tag for conditional requests.
+              schema: { type: string }
+            Last-Modified:
+              description: Last modification timestamp for conditional requests.
+              schema: { type: string, format: date-time }
 
   /public/events/{slug}:
     get:

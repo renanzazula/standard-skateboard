@@ -14,14 +14,14 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 @RestController
-public class PublicEventsController implements PublicEventsApi {
+public class PublicFeedEventsController implements PublicEventsApi {
 
     private final PublicFeedEventsUseCase publicFeedEventsService;
-    private final EventApiMapper eventApiMapper;
+    private final FeedEventApiMapper eventApiMapper;
 
-    public PublicEventsController(
+    public PublicFeedEventsController(
             final PublicFeedEventsUseCase publicFeedEventsService,
-            final EventApiMapper eventApiMapper
+            final FeedEventApiMapper eventApiMapper
     ) {
         this.publicFeedEventsService = publicFeedEventsService;
         this.eventApiMapper = eventApiMapper;
@@ -37,7 +37,7 @@ public class PublicEventsController implements PublicEventsApi {
         final int safeSize = size == null ? 20 : size;
         final String ifNoneMatch = getHeader("If-None-Match");
         final String ifModifiedSince = getHeader("If-Modified-Since");
-        final var version = publicFeedEventsService.getEventsVersion(safePage, safeSize);
+        final var version = publicFeedEventsService.getFeedEventsVersion(safePage, safeSize);
 
         if (ifNoneMatch != null && !ifNoneMatch.isBlank()) {
             if (version.matchesEtag(ifNoneMatch)) {

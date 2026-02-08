@@ -10,14 +10,14 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface SpringDataEventRepository extends JpaRepository<EventJpaEntity, UUID> {
-    Page<EventJpaEntity> findByStatusOrderByStartAtDesc(String status, Pageable pageable);
-    Page<EventJpaEntity> findByStatusOrderByUpdatedAtDesc(String status, Pageable pageable);
-    Page<EventJpaEntity> findAllByOrderByUpdatedAtDesc(Pageable pageable);
-    Optional<EventJpaEntity> findBySlug(String slug);
+public interface SpringDataFeedEventRepository extends JpaRepository<FeedEventJpaEntity, UUID> {
+    Page<FeedEventJpaEntity> findByStatusOrderByStartAtDesc(String status, Pageable pageable);
+    Page<FeedEventJpaEntity> findByStatusOrderByUpdatedAtDesc(String status, Pageable pageable);
+    Page<FeedEventJpaEntity> findAllByOrderByUpdatedAtDesc(Pageable pageable);
+    Optional<FeedEventJpaEntity> findBySlug(String slug);
     long countByStatus(String status);
 
-    @Query("select max(e.updatedAt) from EventJpaEntity e where e.status = :status")
+    @Query("select max(e.updatedAt) from FeedEventJpaEntity e where e.status = :status")
     Instant findMaxUpdatedAtByStatus(@Param("status") String status);
 }
 

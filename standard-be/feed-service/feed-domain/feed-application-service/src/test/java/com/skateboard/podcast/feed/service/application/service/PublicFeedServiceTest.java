@@ -7,7 +7,7 @@ import com.skateboard.podcast.domain.valueobject.Slug;
 import com.skateboard.podcast.domain.valueobject.Tag;
 import com.skateboard.podcast.feed.service.application.dto.FeedVersion;
 import com.skateboard.podcast.feed.service.application.port.out.PostRepository;
-import com.skateboard.podcast.feed.service.events.application.port.out.EventRepository;
+import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventRepository;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -26,7 +26,7 @@ class PublicFeedServiceTest {
     void listPublishedValidatesPageAndSize() {
         final PublicFeedService service = new PublicFeedService(
                 new InMemoryPostRepository(List.of()),
-                new InMemoryEventRepository(List.of())
+                new InMemoryFeedEventRepository(List.of())
         );
 
         assertThrows(ValidationException.class, () -> service.listPublished(-1, 10));
@@ -45,18 +45,18 @@ class PublicFeedServiceTest {
                 Instant.parse("2024-01-07T00:00:00Z")
         );
 
-        final EventRepository.EventRecord eventNewest = eventRecord(
+        final FeedEventRepository.FeedEventRecord eventNewest = eventRecord(
                 "event-09",
                 Instant.parse("2024-01-09T00:00:00Z")
         );
-        final EventRepository.EventRecord eventOlder = eventRecord(
+        final FeedEventRepository.FeedEventRecord eventOlder = eventRecord(
                 "event-08",
                 Instant.parse("2024-01-08T00:00:00Z")
         );
 
         final PublicFeedService service = new PublicFeedService(
                 new InMemoryPostRepository(List.of(postLatest, postOlder)),
-                new InMemoryEventRepository(List.of(eventNewest, eventOlder))
+                new InMemoryFeedEventRepository(List.of(eventNewest, eventOlder))
         );
 
         final var page0 = service.listPublished(0, 2);
@@ -80,14 +80,14 @@ class PublicFeedServiceTest {
                 "post-07",
                 Instant.parse("2024-01-07T00:00:00Z")
         );
-        final EventRepository.EventRecord eventNewest = eventRecord(
+        final FeedEventRepository.FeedEventRecord eventNewest = eventRecord(
                 "event-09",
                 Instant.parse("2024-02-01T00:00:00Z")
         );
 
         final PublicFeedService service = new PublicFeedService(
                 new InMemoryPostRepository(List.of(postLatest, postOlder)),
-                new InMemoryEventRepository(List.of(eventNewest))
+                new InMemoryFeedEventRepository(List.of(eventNewest))
         );
 
         final FeedVersion version = service.getFeedVersion(0, 20);
@@ -115,8 +115,8 @@ class PublicFeedServiceTest {
         );
     }
 
-    private static EventRepository.EventRecord eventRecord(final String slug, final Instant startAt) {
-        return new EventRepository.EventRecord(
+    private static FeedEventRepository.FeedEventRecord eventRecord(final String slug, final Instant startAt) {
+        return new FeedEventRepository.FeedEventRecord(
                 UUID.randomUUID(),
                 "Event",
                 Slug.of(slug),
@@ -201,56 +201,56 @@ class PublicFeedServiceTest {
         }
     }
 
-    private static final class InMemoryEventRepository implements EventRepository {
-        private final List<EventRecord> records;
+    private static final class InMemoryFeedEventRepository implements FeedEventRepository {
+        private final List<FeedEventRecord> records;
 
-        private InMemoryEventRepository(final List<EventRecord> records) {
+        private InMemoryFeedEventRepository(final List<FeedEventRecord> records) {
             this.records = new ArrayList<>(records);
         }
 
         @Override
-        public Optional<EventRecord> findBySlug(final Slug slug) {
+        public Optional<FeedEventRecord> findBySlug(final Slug slug) {
             return records.stream().filter(record -> record.slug().equals(slug)).findFirst();
         }
 
         @Override
-        public Optional<EventRecord> findById(final UUID id) {
+        public Optional<FeedEventRecord> findById(final UUID id) {
             return records.stream().filter(record -> record.id().equals(id)).findFirst();
         }
 
         @Override
-        public List<EventRecord> findAll(final int page, final int size) {
+        public List<FeedEventRecord> findAll(final int page, final int size) {
             return List.copyOf(records);
         }
 
         @Override
-        public List<EventRecord> findByStatus(final EventStatus status, final int page, final int size) {
+        public List<FeedEventRecord> findByStatus(final EventStatus status, final int page, final int size) {
             return records.stream().filter(record -> record.status() == status).toList();
         }
 
         @Override
-        public List<EventRecord> findPublished(final int page, final int size) {
-            final List<EventRecord> published = records.stream()
+        public List<FeedEventRecord> findPublished(final int page, final int size) {
+            final List<FeedEventRecord> published = records.stream()
                     .filter(record -> record.status() == EventStatus.PUBLISHED)
-                    .sorted(Comparator.comparing(EventRecord::startAt).reversed())
+                    .sorted(Comparator.comparing(FeedEventRecord::startAt).reversed())
                     .toList();
             return slice(published, page, size);
         }
 
         @Override
-        public EventStats fetchPublishedStats() {
-            final List<EventRecord> published = records.stream()
+        public FeedEventStats fetchPublishedStats() {
+            final List<FeedEventRecord> published = records.stream()
                     .filter(record -> record.status() == EventStatus.PUBLISHED)
                     .toList();
             final Instant lastUpdatedAt = published.stream()
-                    .map(EventRecord::updatedAt)
+                    .map(FeedEventRecord::updatedAt)
                     .max(Instant::compareTo)
                     .orElse(null);
-            return new EventStats(lastUpdatedAt, published.size());
+            return new FeedEventStats(lastUpdatedAt, published.size());
         }
 
         @Override
-        public EventRecord save(final EventRecord event) {
+        public FeedEventRecord save(final FeedEventRecord event) {
             records.add(event);
             return event;
         }

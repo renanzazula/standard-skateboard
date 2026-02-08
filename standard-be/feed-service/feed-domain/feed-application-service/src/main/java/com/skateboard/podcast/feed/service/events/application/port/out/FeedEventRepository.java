@@ -9,29 +9,29 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface EventRepository {
+public interface FeedEventRepository {
 
-    Optional<EventRecord> findBySlug(Slug slug);
+    Optional<FeedEventRecord> findBySlug(Slug slug);
 
-    Optional<EventRecord> findById(UUID id);
+    Optional<FeedEventRecord> findById(UUID id);
 
-    List<EventRecord> findAll(int page, int size);
+    List<FeedEventRecord> findAll(int page, int size);
 
-    List<EventRecord> findByStatus(EventStatus status, int page, int size);
+    List<FeedEventRecord> findByStatus(EventStatus status, int page, int size);
 
-    List<EventRecord> findPublished(int page, int size);
+    List<FeedEventRecord> findPublished(int page, int size);
 
-    EventStats fetchPublishedStats();
+    FeedEventStats fetchPublishedStats();
 
-    EventRecord save(EventRecord event);
+    FeedEventRecord save(FeedEventRecord event);
 
     void deleteById(UUID id);
 
     void deleteAll();
 
-    record EventStats(Instant lastUpdatedAt, long totalCount) {}
+    record FeedEventStats(Instant lastUpdatedAt, long totalCount) {}
 
-    record EventRecord(
+    record FeedEventRecord(
             UUID id,
             String title,
             Slug slug,

@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "events")
-public class EventJpaEntity {
+public class FeedEventJpaEntity {
 
     @Id
     @Column(name = "id", nullable = false)

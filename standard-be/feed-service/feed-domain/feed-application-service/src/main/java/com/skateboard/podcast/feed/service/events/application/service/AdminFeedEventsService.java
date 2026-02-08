@@ -5,13 +5,13 @@ import com.skateboard.podcast.domain.exception.ValidationException;
 import com.skateboard.podcast.domain.valueobject.EventStatus;
 import com.skateboard.podcast.domain.valueobject.Slug;
 import com.skateboard.podcast.domain.valueobject.Tag;
-import com.skateboard.podcast.feed.service.events.application.dto.EventDetailsView;
-import com.skateboard.podcast.feed.service.events.application.dto.EventEvent;
-import com.skateboard.podcast.feed.service.events.application.dto.EventSummaryView;
-import com.skateboard.podcast.feed.service.events.application.dto.ImportEventCommand;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventDetailsView;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventEvent;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventSummaryView;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventImportCommand;
 import com.skateboard.podcast.feed.service.events.application.port.in.AdminFeedEventsUseCase;
-import com.skateboard.podcast.feed.service.events.application.port.out.EventRepository;
-import com.skateboard.podcast.feed.service.events.application.port.out.EventsEventPublisher;
+import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventRepository;
+import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventsEventPublisher;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -22,20 +22,20 @@ import java.util.UUID;
 
 public class AdminFeedEventsService implements AdminFeedEventsUseCase {
 
-    private final EventRepository eventRepository;
-    private final EventsEventPublisher eventsEventPublisher;
+    private final FeedEventRepository eventRepository;
+    private final FeedEventsEventPublisher eventsEventPublisher;
 
     public AdminFeedEventsService(
-            final EventRepository eventRepository,
-            final EventsEventPublisher eventsEventPublisher
+            final FeedEventRepository eventRepository,
+            final FeedEventsEventPublisher eventsEventPublisher
     ) {
         this.eventRepository = eventRepository;
         this.eventsEventPublisher = eventsEventPublisher;
     }
 
     @Override
-    public List<EventSummaryView> list(final int page, final int size, final EventStatus status) {
-        final List<EventRepository.EventRecord> records = status == null
+    public List<FeedEventSummaryView> list(final int page, final int size, final EventStatus status) {
+        final List<FeedEventRepository.FeedEventRecord> records = status == null
                 ? eventRepository.findAll(page, size)
                 : eventRepository.findByStatus(status, page, size);
         return records.stream()
@@ -44,12 +44,12 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
     }
 
     @Override
-    public Optional<EventDetailsView> getById(final UUID id) {
+    public Optional<FeedEventDetailsView> getById(final UUID id) {
         return eventRepository.findById(id).map(AdminFeedEventsService::toDetails);
     }
 
     @Override
-    public EventDetailsView createDraft(
+    public FeedEventDetailsView createDraft(
             final String title,
             final String slug,
             final String excerpt,
@@ -71,7 +71,7 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
         final Instant now = Instant.now();
         final UUID eventId = UUID.randomUUID();
 
-        final var record = new EventRepository.EventRecord(
+        final var record = new FeedEventRepository.FeedEventRecord(
                 eventId,
                 title.trim(),
                 slugValue,
@@ -94,7 +94,7 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
     }
 
     @Override
-    public EventDetailsView updateById(
+    public FeedEventDetailsView updateById(
             final UUID id,
             final String title,
             final String slug,
@@ -118,7 +118,7 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
         final List<Tag> tagValues = toTagValues(tags);
         final Instant now = Instant.now();
 
-        final var updated = new EventRepository.EventRecord(
+        final var updated = new FeedEventRepository.FeedEventRecord(
                 existing.id(),
                 title.trim(),
                 slugValue,
@@ -138,18 +138,18 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
         );
         final var saved = eventRepository.save(updated);
         if (saved.status() == EventStatus.PUBLISHED) {
-            publishEventEvent("event.updated", saved);
+            publishFeedEventEvent("event.updated", saved);
         }
         return toDetails(saved);
     }
 
     @Override
-    public EventDetailsView publishById(final UUID id) {
+    public FeedEventDetailsView publishById(final UUID id) {
         final var existing = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("event not found"));
 
         final Instant now = Instant.now();
-        final var updated = new EventRepository.EventRecord(
+        final var updated = new FeedEventRepository.FeedEventRecord(
                 existing.id(),
                 existing.title(),
                 existing.slug(),
@@ -168,7 +168,7 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
                 now
         );
         final var saved = eventRepository.save(updated);
-        publishEventEvent("event.published", saved);
+        publishFeedEventEvent("event.published", saved);
         return toDetails(saved);
     }
 
@@ -178,7 +178,7 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
                 .orElseThrow(() -> new NotFoundException("event not found"));
         eventRepository.deleteById(id);
         if (existing.status() == EventStatus.PUBLISHED) {
-            eventsEventPublisher.publishEventEvent(new EventEvent(
+            eventsEventPublisher.publishFeedEventEvent(new FeedEventEvent(
                     "event.deleted",
                     existing.id(),
                     existing.slug().value(),
@@ -188,12 +188,12 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
     }
 
     @Override
-    public List<EventSummaryView> importEvents(final List<ImportEventCommand> items, final UUID createdBy) {
+    public List<FeedEventSummaryView> importEvents(final List<FeedEventImportCommand> items, final UUID createdBy) {
         if (items == null || items.isEmpty()) {
             return List.of();
         }
         final Set<String> seenSlugs = new HashSet<>();
-        final List<EventSummaryView> results = items.stream()
+        final List<FeedEventSummaryView> results = items.stream()
                 .map(item -> importOne(item, createdBy, seenSlugs))
                 .toList();
         eventsEventPublisher.publishEventsUpdated(Instant.now());
@@ -226,8 +226,8 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
                 .toList();
     }
 
-    private EventSummaryView importOne(
-            final ImportEventCommand item,
+    private FeedEventSummaryView importOne(
+            final FeedEventImportCommand item,
             final UUID createdBy,
             final Set<String> seenSlugs
     ) {
@@ -246,7 +246,7 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
         final String slugValue = uniqueSlug(baseSlug, seenSlugs);
         final Instant now = Instant.now();
 
-        final var record = new EventRepository.EventRecord(
+        final var record = new FeedEventRepository.FeedEventRecord(
                 UUID.randomUUID(),
                 item.title().trim(),
                 Slug.of(slugValue),
@@ -281,8 +281,8 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
         return candidate;
     }
 
-    private static EventDetailsView toDetails(final EventRepository.EventRecord event) {
-        return new EventDetailsView(
+    private static FeedEventDetailsView toDetails(final FeedEventRepository.FeedEventRecord event) {
+        return new FeedEventDetailsView(
                 event.id(),
                 event.title(),
                 event.slug().value(),
@@ -302,8 +302,8 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
         );
     }
 
-    private static EventSummaryView toSummary(final EventRepository.EventRecord event) {
-        return new EventSummaryView(
+    private static FeedEventSummaryView toSummary(final FeedEventRepository.FeedEventRecord event) {
+        return new FeedEventSummaryView(
                 event.id(),
                 event.title(),
                 event.slug().value(),
@@ -322,8 +322,8 @@ public class AdminFeedEventsService implements AdminFeedEventsUseCase {
         );
     }
 
-    private void publishEventEvent(final String type, final EventRepository.EventRecord event) {
-        eventsEventPublisher.publishEventEvent(new EventEvent(
+    private void publishFeedEventEvent(final String type, final FeedEventRepository.FeedEventRecord event) {
+        eventsEventPublisher.publishFeedEventEvent(new FeedEventEvent(
                 type,
                 event.id(),
                 event.slug().value(),

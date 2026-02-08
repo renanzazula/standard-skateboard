@@ -1,8 +1,8 @@
 package com.skateboard.podcast.feed.service.events.application.port.in;
 
-import com.skateboard.podcast.feed.service.events.application.dto.EventDetailsView;
-import com.skateboard.podcast.feed.service.events.application.dto.EventSummaryView;
-import com.skateboard.podcast.feed.service.events.application.dto.ImportEventCommand;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventDetailsView;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventSummaryView;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventImportCommand;
 import com.skateboard.podcast.domain.valueobject.EventStatus;
 
 import java.time.Instant;
@@ -11,11 +11,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AdminFeedEventsUseCase {
-    List<EventSummaryView> list(int page, int size, EventStatus status);
+    List<FeedEventSummaryView> list(int page, int size, EventStatus status);
 
-    Optional<EventDetailsView> getById(UUID id);
+    Optional<FeedEventDetailsView> getById(UUID id);
 
-    EventDetailsView createDraft(
+    FeedEventDetailsView createDraft(
             String title,
             String slug,
             String excerpt,
@@ -30,7 +30,7 @@ public interface AdminFeedEventsUseCase {
             UUID createdBy
     );
 
-    EventDetailsView updateById(
+    FeedEventDetailsView updateById(
             UUID id,
             String title,
             String slug,
@@ -45,11 +45,11 @@ public interface AdminFeedEventsUseCase {
             String ticketsUrl
     );
 
-    EventDetailsView publishById(UUID id);
+    FeedEventDetailsView publishById(UUID id);
 
     void deleteById(UUID id);
 
-    List<EventSummaryView> importEvents(List<ImportEventCommand> items, UUID createdBy);
+    List<FeedEventSummaryView> importEvents(List<FeedEventImportCommand> items, UUID createdBy);
 
     void resetAll();
 }

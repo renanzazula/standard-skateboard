@@ -1,7 +1,7 @@
 package com.skateboard.podcast.feed.service.events.application.adapter.in.rest;
 
 import com.skateboard.podcast.domain.security.CurrentUser;
-import com.skateboard.podcast.feed.service.events.application.dto.ImportEventCommand;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventImportCommand;
 import com.skateboard.podcast.feed.service.events.application.port.in.AdminFeedEventsUseCase;
 import com.skateboard.podcast.standardbe.api.AdminEventsApi;
 import com.skateboard.podcast.standardbe.api.model.CreateEventRequest;
@@ -29,14 +29,14 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-public class AdminEventsController implements AdminEventsApi {
+public class AdminFeedEventsController implements AdminEventsApi {
 
     private final AdminFeedEventsUseCase adminFeedEventsService;
-    private final EventApiMapper eventApiMapper;
+    private final FeedEventApiMapper eventApiMapper;
 
-    public AdminEventsController(
+    public AdminFeedEventsController(
             final AdminFeedEventsUseCase adminFeedEventsService,
-            final EventApiMapper eventApiMapper
+            final FeedEventApiMapper eventApiMapper
     ) {
         this.adminFeedEventsService = adminFeedEventsService;
         this.eventApiMapper = eventApiMapper;
@@ -146,7 +146,7 @@ public class AdminEventsController implements AdminEventsApi {
     )
     public ResponseEntity<List<EventSummary>> adminEventImport(final ImportEventsRequest importEventsRequest) {
         final UUID createdBy = requireUserId();
-        final List<ImportEventCommand> commands = toImportCommands(importEventsRequest);
+        final List<FeedEventImportCommand> commands = toImportCommands(importEventsRequest);
         final var imported = adminFeedEventsService.importEvents(commands, createdBy);
         final List<EventSummary> response = imported.stream()
                 .map(eventApiMapper::toEventSummary)
@@ -161,13 +161,13 @@ public class AdminEventsController implements AdminEventsApi {
         return ResponseEntity.noContent().build();
     }
 
-    private List<ImportEventCommand> toImportCommands(final ImportEventsRequest request) {
+    private List<FeedEventImportCommand> toImportCommands(final ImportEventsRequest request) {
         if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
             return List.of();
         }
-        final List<ImportEventCommand> commands = new ArrayList<>(request.getItems().size());
+        final List<FeedEventImportCommand> commands = new ArrayList<>(request.getItems().size());
         for (final CreateEventRequest item : request.getItems()) {
-            commands.add(new ImportEventCommand(
+            commands.add(new FeedEventImportCommand(
                     item.getTitle(),
                     item.getSlug(),
                     item.getExcerpt(),

@@ -3,9 +3,9 @@ package com.skateboard.podcast.feed.service.events.dataaccess.persistence;
 import com.skateboard.podcast.domain.valueobject.EventStatus;
 import com.skateboard.podcast.domain.valueobject.Slug;
 import com.skateboard.podcast.domain.valueobject.Tag;
-import com.skateboard.podcast.feed.service.events.application.port.out.EventRepository;
-import com.skateboard.podcast.feed.service.events.dataaccess.persistence.jpa.EventJpaEntity;
-import com.skateboard.podcast.feed.service.events.dataaccess.persistence.jpa.SpringDataEventRepository;
+import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventRepository;
+import com.skateboard.podcast.feed.service.events.dataaccess.persistence.jpa.FeedEventJpaEntity;
+import com.skateboard.podcast.feed.service.events.dataaccess.persistence.jpa.SpringDataFeedEventRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
@@ -15,58 +15,58 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class EventRepositoryAdapter implements EventRepository {
+public class FeedEventRepositoryAdapter implements FeedEventRepository {
 
-    private final SpringDataEventRepository repo;
+    private final SpringDataFeedEventRepository repo;
 
-    public EventRepositoryAdapter(final SpringDataEventRepository repo) {
+    public FeedEventRepositoryAdapter(final SpringDataFeedEventRepository repo) {
         this.repo = repo;
     }
 
     @Override
-    public Optional<EventRecord> findBySlug(final Slug slug) {
-        return repo.findBySlug(slug.value()).map(EventRepositoryAdapter::toRecord);
+    public Optional<FeedEventRecord> findBySlug(final Slug slug) {
+        return repo.findBySlug(slug.value()).map(FeedEventRepositoryAdapter::toRecord);
     }
 
     @Override
-    public Optional<EventRecord> findById(final java.util.UUID id) {
-        return repo.findById(id).map(EventRepositoryAdapter::toRecord);
+    public Optional<FeedEventRecord> findById(final java.util.UUID id) {
+        return repo.findById(id).map(FeedEventRepositoryAdapter::toRecord);
     }
 
     @Override
-    public List<EventRecord> findAll(final int page, final int size) {
+    public List<FeedEventRecord> findAll(final int page, final int size) {
         return repo.findAllByOrderByUpdatedAtDesc(PageRequest.of(page, size))
-                .map(EventRepositoryAdapter::toRecord)
+                .map(FeedEventRepositoryAdapter::toRecord)
                 .getContent();
     }
 
     @Override
-    public List<EventRecord> findByStatus(final EventStatus status, final int page, final int size) {
+    public List<FeedEventRecord> findByStatus(final EventStatus status, final int page, final int size) {
         return repo.findByStatusOrderByUpdatedAtDesc(status.name(), PageRequest.of(page, size))
-                .map(EventRepositoryAdapter::toRecord)
+                .map(FeedEventRepositoryAdapter::toRecord)
                 .getContent();
     }
 
     @Override
-    public List<EventRecord> findPublished(final int page, final int size) {
+    public List<FeedEventRecord> findPublished(final int page, final int size) {
         return repo.findByStatusOrderByStartAtDesc(
                         EventStatus.PUBLISHED.name(),
                         PageRequest.of(page, size)
                 )
-                .map(EventRepositoryAdapter::toRecord)
+                .map(FeedEventRepositoryAdapter::toRecord)
                 .getContent();
     }
 
     @Override
-    public EventStats fetchPublishedStats() {
+    public FeedEventStats fetchPublishedStats() {
         final Instant lastUpdatedAt = repo.findMaxUpdatedAtByStatus(EventStatus.PUBLISHED.name());
         final long totalCount = repo.countByStatus(EventStatus.PUBLISHED.name());
-        return new EventStats(lastUpdatedAt, totalCount);
+        return new FeedEventStats(lastUpdatedAt, totalCount);
     }
 
     @Override
-    public EventRecord save(final EventRecord event) {
-        final EventJpaEntity e = new EventJpaEntity();
+    public FeedEventRecord save(final FeedEventRecord event) {
+        final FeedEventJpaEntity e = new FeedEventJpaEntity();
         e.setId(event.id());
         e.setTitle(event.title());
         e.setSlug(event.slug().value());
@@ -97,8 +97,8 @@ public class EventRepositoryAdapter implements EventRepository {
         repo.deleteAll();
     }
 
-    private static EventRecord toRecord(final EventJpaEntity e) {
-        return new EventRecord(
+    private static FeedEventRecord toRecord(final FeedEventJpaEntity e) {
+        return new FeedEventRecord(
                 e.getId(),
                 e.getTitle(),
                 Slug.of(e.getSlug()),

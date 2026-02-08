@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.skateboard.podcast.domain.exception.ValidationException;
-import com.skateboard.podcast.feed.service.events.application.dto.EventDetailsView;
-import com.skateboard.podcast.feed.service.events.application.dto.EventSummaryView;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventDetailsView;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventSummaryView;
 import com.skateboard.podcast.standardbe.api.model.Block;
 import com.skateboard.podcast.standardbe.api.model.EventDetails;
 import com.skateboard.podcast.standardbe.api.model.EventStatus;
@@ -23,17 +23,17 @@ import java.util.List;
 import java.util.Locale;
 
 @Component
-public class EventApiMapper {
+public class FeedEventApiMapper {
 
     private static final TypeReference<List<Block>> BLOCK_LIST = new TypeReference<>() {};
 
     private final ObjectMapper objectMapper;
 
-    public EventApiMapper(final ObjectMapper objectMapper) {
+    public FeedEventApiMapper(final ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
-    public PageEventSummary toPageEventSummary(final List<EventSummaryView> items, final int page, final int size) {
+    public PageEventSummary toPageEventSummary(final List<FeedEventSummaryView> items, final int page, final int size) {
         final List<EventSummary> summaries = items == null
                 ? List.of()
                 : items.stream().map(this::toEventSummary).toList();
@@ -44,7 +44,7 @@ public class EventApiMapper {
                 .totalItems(summaries.size());
     }
 
-    public EventSummary toEventSummary(final EventSummaryView view) {
+    public EventSummary toEventSummary(final FeedEventSummaryView view) {
         final ImageRef thumbnail = readThumbnail(view.thumbnailJson());
         return new EventSummary()
                 .id(view.id())
@@ -64,7 +64,7 @@ public class EventApiMapper {
                 .createdBy(view.createdBy());
     }
 
-    public EventDetails toEventDetails(final EventDetailsView view) {
+    public EventDetails toEventDetails(final FeedEventDetailsView view) {
         final ImageRef thumbnail = readThumbnail(view.thumbnailJson());
         final List<Block> content = readContent(view.contentJson());
         return new EventDetails()

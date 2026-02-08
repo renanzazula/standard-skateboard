@@ -1,8 +1,8 @@
 package com.skateboard.podcast.standard.service.container.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skateboard.podcast.feed.service.events.application.dto.EventEvent;
-import com.skateboard.podcast.feed.service.events.application.port.out.EventsEventPublisher;
+import com.skateboard.podcast.feed.service.events.application.dto.FeedEventEvent;
+import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventsEventPublisher;
 import com.skateboard.podcast.appconfig.service.application.port.out.AppConfigEventPublisher;
 import com.skateboard.podcast.appconfig.service.application.port.out.NavigationConfigEventPublisher;
 import org.slf4j.Logger;
@@ -14,15 +14,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
-public class WebSocketEventsEventPublisher implements EventsEventPublisher, AppConfigEventPublisher, NavigationConfigEventPublisher {
+public class WebSocketFeedEventsEventPublisher implements FeedEventsEventPublisher, AppConfigEventPublisher, NavigationConfigEventPublisher {
 
-    private static final Logger log = LoggerFactory.getLogger(WebSocketEventsEventPublisher.class);
+    private static final Logger log = LoggerFactory.getLogger(WebSocketFeedEventsEventPublisher.class);
     private static final int VERSION = 1;
 
     private final EventsWebSocketHandler handler;
     private final ObjectMapper objectMapper;
 
-    public WebSocketEventsEventPublisher(
+    public WebSocketFeedEventsEventPublisher(
             final EventsWebSocketHandler handler,
             final ObjectMapper objectMapper
     ) {
@@ -31,7 +31,7 @@ public class WebSocketEventsEventPublisher implements EventsEventPublisher, AppC
     }
 
     @Override
-    public void publishEventEvent(final EventEvent event) {
+    public void publishFeedEventEvent(final FeedEventEvent event) {
         if (event == null) {
             return;
         }

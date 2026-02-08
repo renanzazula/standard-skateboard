@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record EventDetailsView(
+public record FeedEventDetailsView(
         UUID id,
         String title,
         String slug,
