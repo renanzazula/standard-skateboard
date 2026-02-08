@@ -6,6 +6,7 @@ import com.skateboard.podcast.standardbe.api.model.SplashConfig;
 import com.skateboard.podcast.standardbe.api.model.SplashMediaType;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -14,8 +15,13 @@ public class AppConfigStore {
     private static final int MIN_POSTS_PER_PAGE = 5;
     private static final int MAX_POSTS_PER_PAGE = 50;
 
+    private final AppConfigEventPublisher eventPublisher;
     private final AtomicReference<AppConfig> current =
             new AtomicReference<>(defaultConfig());
+
+    public AppConfigStore(final AppConfigEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
 
     public AppConfig get() {
         return copy(current.get());
@@ -24,6 +30,7 @@ public class AppConfigStore {
     public AppConfig update(final AppConfig updated) {
         validate(updated);
         current.set(copy(updated));
+        eventPublisher.publishConfigUpdated(Instant.now());
         return get();
     }
 

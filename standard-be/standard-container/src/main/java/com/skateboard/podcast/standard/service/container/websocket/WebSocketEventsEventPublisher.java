@@ -3,6 +3,7 @@ package com.skateboard.podcast.standard.service.container.websocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skateboard.podcast.event.service.application.dto.EventEvent;
 import com.skateboard.podcast.event.service.application.port.out.EventsEventPublisher;
+import com.skateboard.podcast.standard.service.container.appconfig.AppConfigEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
-public class WebSocketEventsEventPublisher implements EventsEventPublisher {
+public class WebSocketEventsEventPublisher implements EventsEventPublisher, AppConfigEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketEventsEventPublisher.class);
     private static final int VERSION = 1;
@@ -46,6 +47,13 @@ public class WebSocketEventsEventPublisher implements EventsEventPublisher {
         final Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("updatedAt", (updatedAt == null ? Instant.now() : updatedAt).toString());
         broadcast("events.updated", payload);
+    }
+
+    @Override
+    public void publishConfigUpdated(final Instant updatedAt) {
+        final Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("updatedAt", (updatedAt == null ? Instant.now() : updatedAt).toString());
+        broadcast("config.updated", payload);
     }
 
     private void broadcast(final String type, final Map<String, Object> payload) {

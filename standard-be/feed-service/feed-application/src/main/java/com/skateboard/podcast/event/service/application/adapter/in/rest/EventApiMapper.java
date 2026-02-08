@@ -2,7 +2,9 @@ package com.skateboard.podcast.event.service.application.adapter.in.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.skateboard.podcast.domain.exception.ValidationException;
 import com.skateboard.podcast.event.service.application.dto.EventDetailsView;
 import com.skateboard.podcast.event.service.application.dto.EventSummaryView;
@@ -18,6 +20,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 public class EventApiMapper {
@@ -97,7 +100,11 @@ public class EventApiMapper {
     public String writeContentJson(final List<Block> blocks) {
         final List<Block> safe = blocks == null ? List.of() : blocks;
         try {
-            return objectMapper.writeValueAsString(safe);
+            final List<JsonNode> normalized = safe.stream()
+                    .filter(block -> block != null)
+                    .map(this::normalizeBlock)
+                    .toList();
+            return objectMapper.writeValueAsString(normalized);
         } catch (final JsonProcessingException e) {
             throw new ValidationException("invalid content payload");
         }
@@ -110,6 +117,14 @@ public class EventApiMapper {
         try {
             return objectMapper.readValue(json, ImageRef.class);
         } catch (final JsonProcessingException e) {
+            final String unwrapped = unwrapJsonString(json);
+            if (unwrapped != null) {
+                try {
+                    return objectMapper.readValue(unwrapped, ImageRef.class);
+                } catch (final JsonProcessingException ignored) {
+                    // fall through
+                }
+            }
             throw new ValidationException("invalid stored thumbnail");
         }
     }
@@ -121,8 +136,28 @@ public class EventApiMapper {
         try {
             return objectMapper.readValue(json, BLOCK_LIST);
         } catch (final JsonProcessingException e) {
+            final String unwrapped = unwrapJsonString(json);
+            if (unwrapped != null) {
+                try {
+                    return objectMapper.readValue(unwrapped, BLOCK_LIST);
+                } catch (final JsonProcessingException ignored) {
+                    // fall through
+                }
+            }
             throw new ValidationException("invalid stored content");
         }
+    }
+
+    private String unwrapJsonString(final String json) {
+        try {
+            final JsonNode node = objectMapper.readTree(json);
+            if (node != null && node.isTextual()) {
+                return node.asText();
+            }
+        } catch (final JsonProcessingException ignored) {
+            // ignore and return null
+        }
+        return null;
     }
 
     private static OffsetDateTime toOffsetDateTime(final java.time.Instant instant) {
@@ -130,5 +165,31 @@ public class EventApiMapper {
             return null;
         }
         return OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
+    }
+
+    private JsonNode normalizeBlock(final Block block) {
+        final JsonNode node = objectMapper.valueToTree(block);
+        if (node instanceof final ObjectNode objectNode) {
+            if (!objectNode.has("type")) {
+                final String typeValue = block.getType() != null
+                        ? block.getType().getValue()
+                        : inferType(block);
+                if (typeValue != null && !typeValue.isBlank()) {
+                    objectNode.put("type", typeValue);
+                }
+            }
+        }
+        return node;
+    }
+
+    private static String inferType(final Block block) {
+        if (block == null) {
+            return null;
+        }
+        String name = block.getClass().getSimpleName();
+        if (name.endsWith("Block")) {
+            name = name.substring(0, name.length() - "Block".length());
+        }
+        return name.isEmpty() ? null : name.toLowerCase(Locale.ROOT);
     }
 }

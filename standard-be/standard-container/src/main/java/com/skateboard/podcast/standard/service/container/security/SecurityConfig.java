@@ -22,16 +22,16 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final List<String> corsAllowedOrigins;
+    private final List<String> corsAllowedOriginPatterns;
 
     public SecurityConfig(
             final JwtAuthenticationFilter jwtFilter,
-            @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}") final String corsAllowedOrigins
+            @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}") final String corsAllowedOrigins,
+            @Value("${app.cors.allowed-origin-patterns:}") final String corsAllowedOriginPatterns
     ) {
         this.jwtFilter = jwtFilter;
-        this.corsAllowedOrigins = Arrays.stream(corsAllowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isEmpty())
-                .toList();
+        this.corsAllowedOrigins = parseCsv(corsAllowedOrigins);
+        this.corsAllowedOriginPatterns = parseCsv(corsAllowedOriginPatterns);
     }
 
     @Bean
@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/public/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/public/events").permitAll()
                         .requestMatchers(HttpMethod.GET, "/public/events/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/auth/admin-passcode").permitAll()
@@ -68,7 +69,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(corsAllowedOrigins);
+        if (!corsAllowedOriginPatterns.isEmpty()) {
+            config.setAllowedOriginPatterns(corsAllowedOriginPatterns);
+        } else {
+            config.setAllowedOrigins(corsAllowedOrigins);
+        }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin"));
         config.setExposedHeaders(List.of("Location"));
@@ -77,5 +82,15 @@ public class SecurityConfig {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private static List<String> parseCsv(final String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
     }
 }
