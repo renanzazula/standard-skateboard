@@ -43,9 +43,14 @@ App config
 - Public config: `GET /public/app-config`
 - Admin config: `GET /admin/app-config`, `PUT /admin/app-config`
 
+Navigation config
+- Public config: `GET /public/navigation-config`
+- Admin config: `PUT /admin/navigation-config`
+
 WebSocket events
 - Feed updates: `WS /ws/feed` (types containing `feed` or `post`)
 - Event updates: `WS /ws/events` (types containing `event` or `events`)
+- Navigation updates: `WS /ws/events` (type `navigation.updated`)
 
 Observability
 - Prometheus metrics: `GET /actuator/prometheus`
@@ -93,6 +98,9 @@ Container boot and wiring (Testcontainers + Spring Boot)
 
 Events REST + WebSocket flow (Testcontainers + Spring Boot + WS)
 - `standard-be/standard-container/src/test/java/com/skateboard/podcast/standard/service/container/events/EventsIntegrationTest.java`
+
+Navigation config REST + WebSocket flow (Testcontainers + Spring Boot + WS)
+- `standard-be/standard-container/src/test/java/com/skateboard/podcast/standard/service/container/navigationconfig/NavigationConfigIntegrationTest.java`
 
 ## How to run tests
 

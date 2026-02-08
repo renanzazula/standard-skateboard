@@ -23,6 +23,31 @@
         </dependency>
         <dependency>
             <groupId>com.skateboard.podcast</groupId>
+            <artifactId>app-config-domain-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
+            <artifactId>app-config-application-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
+            <artifactId>app-config-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
+            <artifactId>app-config-dataaccess</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
+            <artifactId>app-config-messaging</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
             <artifactId>iam-domain-core</artifactId>
             <version>${project.version}</version>
         </dependency>

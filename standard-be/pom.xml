@@ -23,6 +23,7 @@
     <modules>
         <module>api-contract</module>
         <module>common</module>
+        <module>app-config-service</module>
         <module>iam-service</module>
         <module>feed-service</module>
         <module>standard-container</module>

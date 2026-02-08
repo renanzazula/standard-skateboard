@@ -149,6 +149,25 @@ components:
         postsPerPage: { type: integer, minimum: 5, maximum: 50 }
         splash: { $ref: '#/components/schemas/SplashConfig' }
 
+    NavigationTab:
+      type: object
+      required: [ id, name, icon, order, enabled, isSystem ]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        icon: { type: string }
+        order: { type: integer }
+        enabled: { type: boolean }
+        isSystem: { type: boolean }
+
+    NavigationConfig:
+      type: object
+      required: [ tabs ]
+      properties:
+        tabs:
+          type: array
+          items: { $ref: '#/components/schemas/NavigationTab' }
+
     BlockType:
       type: string
       enum: [ paragraph, heading, image, quote, video, embed, gallery, link, spotify ]
@@ -669,6 +688,35 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AppConfig' }
+
+  /public/navigation-config:
+    get:
+      tags: [ PublicNavigationConfig ]
+      operationId: publicNavigationConfigGet
+      responses:
+        "200":
+          description: Public navigation configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NavigationConfig' }
+
+  /admin/navigation-config:
+    put:
+      tags: [ AdminNavigationConfig ]
+      operationId: adminNavigationConfigUpdate
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NavigationConfig' }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NavigationConfig' }
 
   /admin/posts:
     get:

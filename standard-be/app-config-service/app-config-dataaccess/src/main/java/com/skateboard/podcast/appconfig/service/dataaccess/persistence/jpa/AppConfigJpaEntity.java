@@ -1,4 +1,4 @@
-package com.skateboard.podcast.standard.service.container.appconfig.persistence.jpa;
+package com.skateboard.podcast.appconfig.service.dataaccess.persistence.jpa;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

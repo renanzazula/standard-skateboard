@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/public/auth/social").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/public/app-config").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/navigation-config").permitAll()
                         .requestMatchers("/ws/**").permitAll()
 
                         // admin endpoints

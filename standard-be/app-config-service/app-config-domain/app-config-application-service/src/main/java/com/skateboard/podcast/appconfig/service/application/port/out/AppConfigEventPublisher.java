@@ -1,4 +1,4 @@
-package com.skateboard.podcast.standard.service.container.appconfig;
+package com.skateboard.podcast.appconfig.service.application.port.out;
 
 import java.time.Instant;
 
