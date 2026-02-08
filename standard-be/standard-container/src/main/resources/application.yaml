@@ -35,11 +35,15 @@ management:
 
 app:
   environment: ${APP_ENV:local}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000}
 
 logging:
   logstash:
     host: ${LOGSTASH_HOST:localhost}
     port: ${LOGSTASH_PORT:5000}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId}] %t %c{1} - %m%n"
 
 # JWT settings (you’ll use these in your TokenService)
 security:

@@ -4,11 +4,11 @@ services:
     container_name: standard-postgres
     profiles: [ "local", "dev" ]
     environment:
-      POSTGRES_DB: standarddb
-      POSTGRES_USER: standard
-      POSTGRES_PASSWORD: standard
+      POSTGRES_DB: ${POSTGRES_DB:-standarddb}
+      POSTGRES_USER: ${POSTGRES_USER:-standard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-standard}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -22,10 +22,10 @@ services:
     container_name: standard-pgadmin
     profiles: [ "local", "dev" ]
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@local.dev
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
     ports:
-      - "5050:80"
+      - "${PGADMIN_PORT:-5050}:80"
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,12 +34,12 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     profiles: [ "local", "dev" ]
     environment:
-      discovery.type: single-node
-      xpack.security.enabled: "false"
-      xpack.security.enrollment.enabled: "false"
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      discovery.type: ${ES_DISCOVERY_TYPE:-single-node}
+      xpack.security.enabled: ${ES_XPACK_SECURITY_ENABLED:-false}
+      xpack.security.enrollment.enabled: ${ES_XPACK_ENROLLMENT_ENABLED:-false}
+      ES_JAVA_OPTS: "${ES_JAVA_OPTS:--Xms512m -Xmx512m}"
     ports:
-      - "9200:9200"
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
 
@@ -47,11 +47,11 @@ services:
     image: docker.elastic.co/logstash/logstash:8.13.4
     profiles: [ "local", "dev" ]
     environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-      LS_JAVA_OPTS: -Xms256m -Xmx256m
+      ELASTICSEARCH_HOSTS: ${ELASTICSEARCH_HOSTS:-http://elasticsearch:9200}
+      LS_JAVA_OPTS: "${LS_JAVA_OPTS:--Xms256m -Xmx256m}"
     ports:
-      - "5000:5000"
-      - "9600:9600"
+      - "${LOGSTASH_PORT:-5000}:5000"
+      - "${LOGSTASH_MONITORING_PORT:-9600}:9600"
     volumes:
       - ./observability/logstash/pipeline:/usr/share/logstash/pipeline
     depends_on:
@@ -61,9 +61,9 @@ services:
     image: docker.elastic.co/kibana/kibana:8.13.4
     profiles: [ "local", "dev" ]
     environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: ${ELASTICSEARCH_HOSTS:-http://elasticsearch:9200}
     ports:
-      - "5601:5601"
+      - "${KIBANA_PORT:-5601}:5601"
     depends_on:
       - elasticsearch
 

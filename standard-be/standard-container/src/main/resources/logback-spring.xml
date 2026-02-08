@@ -17,6 +17,7 @@
             <destination>${logstashHost}:${logstashPort}</destination>
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <customFields>{"app":"${appName}","env":"${appEnv}"}</customFields>
+                <includeMdcKeyName>traceId</includeMdcKeyName>
             </encoder>
         </appender>
 
