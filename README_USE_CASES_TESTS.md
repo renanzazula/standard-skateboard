@@ -13,8 +13,8 @@ Public auth
 - Refresh token: `POST /public/auth/refresh`
 - Logout: `POST /public/auth/logout`
 
-Public feed (posts)
-- List published posts (ETag/Last-Modified): `GET /public/feed`
+Public feed (posts + events)
+- List published feed items (ETag/Last-Modified): `GET /public/feed`
 - Fetch post by slug: `GET /public/posts/{slug}`
 
 Admin posts (requires `ROLE_ADMIN`)
@@ -57,13 +57,14 @@ Domain/value objects
 - `standard-be/common/common-domain/src/test/java/com/skateboard/podcast/domain/valueobject/TagTest.java`
 
 Feed REST adapters
-- `standard-be/feed-service/feed-application/src/test/java/com/skateboard/podcast/feed/service/application/adapter/in/rest/AdminPostControllerTest.java`
+- `standard-be/feed-service/feed-application/src/test/java/com/skateboard/podcast/feed/service/application/adapter/in/rest/AdminPostsControllerTest.java`
 - `standard-be/feed-service/feed-application/src/test/java/com/skateboard/podcast/feed/service/application/adapter/in/rest/PublicFeedControllerTest.java`
 
 Feed application services
 - `standard-be/feed-service/feed-domain/feed-application-service/src/test/java/com/skateboard/podcast/feed/service/application/dto/FeedVersionTest.java`
-- `standard-be/feed-service/feed-domain/feed-application-service/src/test/java/com/skateboard/podcast/feed/service/application/service/AdminPostServiceTest.java`
+- `standard-be/feed-service/feed-domain/feed-application-service/src/test/java/com/skateboard/podcast/feed/service/application/service/AdminPostsServiceTest.java`
 - `standard-be/feed-service/feed-domain/feed-application-service/src/test/java/com/skateboard/podcast/feed/service/application/service/PublicFeedServiceTest.java`
+- `standard-be/feed-service/feed-domain/feed-application-service/src/test/java/com/skateboard/podcast/feed/service/application/service/PublicPostsServiceTest.java`
 
 Feed data access
 - `standard-be/feed-service/feed-dataaccess/src/test/java/com/skateboard/podcast/feed/service/dataaccess/persistence/PostRepositoryAdapterTest.java`

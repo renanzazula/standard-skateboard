@@ -1,9 +1,10 @@
 package com.skateboard.podcast.feed.service.application.adapter.in.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skateboard.podcast.feed.service.application.dto.FeedItemSummaryView;
 import com.skateboard.podcast.feed.service.application.dto.FeedVersion;
 import com.skateboard.podcast.feed.service.application.dto.PostDetailsView;
-import com.skateboard.podcast.feed.service.application.dto.PostSummaryView;
+import com.skateboard.podcast.feed.service.application.port.in.PublicPostsUseCase;
 import com.skateboard.podcast.feed.service.application.port.in.PublicFeedUseCase;
 import com.skateboard.podcast.standardbe.api.model.ImageRef;
 import org.junit.jupiter.api.Test;
@@ -40,14 +41,23 @@ class PublicFeedControllerTest {
     private ObjectMapper objectMapper;
 
     @Mock
-    private PublicFeedUseCase publicFeedService;
+    private PublicFeedUseCase publicFeedUseCase;
+
+    @Mock
+    private PublicPostsUseCase publicPostsUseCase;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.findAndRegisterModules();
         final PostApiMapper postApiMapper = new PostApiMapper(objectMapper);
-        final PublicFeedController controller = new PublicFeedController(publicFeedService, postApiMapper);
+        final FeedApiMapper feedApiMapper = new FeedApiMapper(objectMapper);
+        final PublicFeedController controller = new PublicFeedController(
+                publicFeedUseCase,
+                publicPostsUseCase,
+                feedApiMapper,
+                postApiMapper
+        );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .addFilters(new RequestContextFilter())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
@@ -56,7 +66,8 @@ class PublicFeedControllerTest {
 
     @Test
     void publicFeedList_returnsPage() throws Exception {
-        final PostSummaryView summary = new PostSummaryView(
+        final FeedItemSummaryView summary = new FeedItemSummaryView(
+                "POST",
                 UUID.randomUUID(),
                 "First Post",
                 "first-post",
@@ -64,7 +75,15 @@ class PublicFeedControllerTest {
                 List.of("news", "launch"),
                 "PUBLISHED",
                 objectMapper.writeValueAsString(new ImageRef().url("https://example.com/a.png").alt("thumb")),
-                Instant.parse("2024-01-01T00:00:00Z")
+                Instant.parse("2024-01-01T00:00:00Z"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                Instant.parse("2024-01-01T00:00:00Z"),
+                Instant.parse("2024-01-01T00:00:00Z"),
+                UUID.randomUUID()
         );
 
         final FeedVersion version = new FeedVersion(
@@ -72,8 +91,8 @@ class PublicFeedControllerTest {
                 Instant.parse("2024-01-02T00:00:00Z")
         );
 
-        given(publicFeedService.listPublished(1, 2)).willReturn(List.of(summary));
-        given(publicFeedService.getFeedVersion(1, 2)).willReturn(version);
+        given(publicFeedUseCase.listPublished(1, 2)).willReturn(List.of(summary));
+        given(publicFeedUseCase.getFeedVersion(1, 2)).willReturn(version);
 
         mockMvc.perform(get("/public/feed")
                         .param("page", "1")
@@ -84,6 +103,7 @@ class PublicFeedControllerTest {
                 .andExpect(header().exists("Last-Modified"))
                 .andExpect(jsonPath("$.page").value(1))
                 .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.items[0].type").value("POST"))
                 .andExpect(jsonPath("$.items[0].slug").value("first-post"))
                 .andExpect(jsonPath("$.items[0].thumbnail.url").value("https://example.com/a.png"));
     }
@@ -95,7 +115,7 @@ class PublicFeedControllerTest {
                 Instant.parse("2024-01-03T00:00:00Z")
         );
 
-        given(publicFeedService.getFeedVersion(0, 20)).willReturn(version);
+        given(publicFeedUseCase.getFeedVersion(0, 20)).willReturn(version);
 
         mockMvc.perform(get("/public/feed")
                         .header("If-None-Match", "\"etag-2\"")
@@ -113,7 +133,7 @@ class PublicFeedControllerTest {
                 .withZone(ZoneOffset.UTC)
                 .format(updatedAt);
 
-        given(publicFeedService.getFeedVersion(0, 20)).willReturn(version);
+        given(publicFeedUseCase.getFeedVersion(0, 20)).willReturn(version);
 
         mockMvc.perform(get("/public/feed")
                         .header("If-Modified-Since", ifModifiedSince)
@@ -131,7 +151,8 @@ class PublicFeedControllerTest {
                 .withZone(ZoneOffset.UTC)
                 .format(updatedAt);
 
-        final PostSummaryView summary = new PostSummaryView(
+        final FeedItemSummaryView summary = new FeedItemSummaryView(
+                "POST",
                 UUID.randomUUID(),
                 "Second Post",
                 "second-post",
@@ -139,11 +160,19 @@ class PublicFeedControllerTest {
                 List.of("news"),
                 "PUBLISHED",
                 objectMapper.writeValueAsString(new ImageRef().url("https://example.com/b.png").alt("thumb")),
-                Instant.parse("2024-01-01T00:00:00Z")
+                Instant.parse("2024-01-01T00:00:00Z"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                Instant.parse("2024-01-01T00:00:00Z"),
+                Instant.parse("2024-01-01T00:00:00Z"),
+                UUID.randomUUID()
         );
 
-        given(publicFeedService.getFeedVersion(0, 20)).willReturn(version);
-        given(publicFeedService.listPublished(0, 20)).willReturn(List.of(summary));
+        given(publicFeedUseCase.getFeedVersion(0, 20)).willReturn(version);
+        given(publicFeedUseCase.listPublished(0, 20)).willReturn(List.of(summary));
 
         mockMvc.perform(get("/public/feed")
                         .header("If-None-Match", "\"different\"")
@@ -172,7 +201,7 @@ class PublicFeedControllerTest {
                 Instant.parse("2024-01-02T00:00:00Z")
         );
 
-        given(publicFeedService.getBySlug("hello-world")).willReturn(Optional.of(details));
+        given(publicPostsUseCase.getBySlug("hello-world")).willReturn(Optional.of(details));
 
         mockMvc.perform(get("/public/posts/hello-world")
                         .accept(MediaType.APPLICATION_JSON))
@@ -184,10 +213,11 @@ class PublicFeedControllerTest {
 
     @Test
     void publicPostGetBySlug_returnsNotFound() throws Exception {
-        given(publicFeedService.getBySlug("missing")).willReturn(Optional.empty());
+        given(publicPostsUseCase.getBySlug("missing")).willReturn(Optional.empty());
 
         mockMvc.perform(get("/public/posts/missing")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
 }
+

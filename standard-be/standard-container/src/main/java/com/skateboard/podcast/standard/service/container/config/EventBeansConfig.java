@@ -1,11 +1,11 @@
 package com.skateboard.podcast.standard.service.container.config;
 
-import com.skateboard.podcast.event.service.application.port.in.AdminEventUseCase;
-import com.skateboard.podcast.event.service.application.port.in.PublicEventsUseCase;
-import com.skateboard.podcast.event.service.application.port.out.EventRepository;
-import com.skateboard.podcast.event.service.application.port.out.EventsEventPublisher;
-import com.skateboard.podcast.event.service.application.service.AdminEventService;
-import com.skateboard.podcast.event.service.application.service.PublicEventsService;
+import com.skateboard.podcast.feed.service.events.application.port.in.AdminFeedEventsUseCase;
+import com.skateboard.podcast.feed.service.events.application.port.in.PublicFeedEventsUseCase;
+import com.skateboard.podcast.feed.service.events.application.port.out.EventRepository;
+import com.skateboard.podcast.feed.service.events.application.port.out.EventsEventPublisher;
+import com.skateboard.podcast.feed.service.events.application.service.AdminFeedEventsService;
+import com.skateboard.podcast.feed.service.events.application.service.PublicFeedEventsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,15 +13,17 @@ import org.springframework.context.annotation.Configuration;
 public class EventBeansConfig {
 
     @Bean
-    public PublicEventsUseCase publicEventsService(final EventRepository eventRepository) {
-        return new PublicEventsService(eventRepository);
+    public PublicFeedEventsUseCase publicFeedEventsService(final EventRepository eventRepository) {
+        return new PublicFeedEventsService(eventRepository);
     }
 
     @Bean
-    public AdminEventUseCase adminEventService(
+    public AdminFeedEventsUseCase adminFeedEventsService(
             final EventRepository eventRepository,
             final EventsEventPublisher eventsEventPublisher
     ) {
-        return new AdminEventService(eventRepository, eventsEventPublisher);
+        return new AdminFeedEventsService(eventRepository, eventsEventPublisher);
     }
 }
+
+

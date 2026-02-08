@@ -1,8 +1,8 @@
 package com.skateboard.podcast.standard.service.container.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skateboard.podcast.event.service.application.dto.EventEvent;
-import com.skateboard.podcast.event.service.application.port.out.EventsEventPublisher;
+import com.skateboard.podcast.feed.service.events.application.dto.EventEvent;
+import com.skateboard.podcast.feed.service.events.application.port.out.EventsEventPublisher;
 import com.skateboard.podcast.standard.service.container.appconfig.AppConfigEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,3 +69,4 @@ public class WebSocketEventsEventPublisher implements EventsEventPublisher, AppC
         }
     }
 }
+

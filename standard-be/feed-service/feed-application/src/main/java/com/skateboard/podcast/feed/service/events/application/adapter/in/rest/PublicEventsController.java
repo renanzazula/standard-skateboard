@@ -1,10 +1,10 @@
-package com.skateboard.podcast.feed.service.application.adapter.in.rest;
+package com.skateboard.podcast.feed.service.events.application.adapter.in.rest;
 
-import com.skateboard.podcast.feed.service.application.port.in.PublicFeedUseCase;
-import com.skateboard.podcast.feed.service.application.port.in.PublicPostsUseCase;
-import com.skateboard.podcast.standardbe.api.PublicFeedApi;
-import com.skateboard.podcast.standardbe.api.model.PageFeedItemSummary;
-import com.skateboard.podcast.standardbe.api.model.PostDetails;
+import com.skateboard.podcast.feed.service.events.application.port.in.PublicFeedEventsUseCase;
+import com.skateboard.podcast.standardbe.api.PublicEventsApi;
+import com.skateboard.podcast.standardbe.api.model.EventDetails;
+import com.skateboard.podcast.standardbe.api.model.PageEventSummary;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,42 +13,31 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 @RestController
-public class PublicFeedController implements PublicFeedApi {
+public class PublicEventsController implements PublicEventsApi {
 
-    private final PublicFeedUseCase publicFeedUseCase;
-    private final PublicPostsUseCase publicPostsUseCase;
-    private final FeedApiMapper feedApiMapper;
-    private final PostApiMapper postApiMapper;
+    private final PublicFeedEventsUseCase publicFeedEventsService;
+    private final EventApiMapper eventApiMapper;
 
-    public PublicFeedController(
-            final PublicFeedUseCase publicFeedUseCase,
-            final PublicPostsUseCase publicPostsUseCase,
-            final FeedApiMapper feedApiMapper,
-            final PostApiMapper postApiMapper
+    public PublicEventsController(
+            final PublicFeedEventsUseCase publicFeedEventsService,
+            final EventApiMapper eventApiMapper
     ) {
-        this.publicFeedUseCase = publicFeedUseCase;
-        this.publicPostsUseCase = publicPostsUseCase;
-        this.feedApiMapper = feedApiMapper;
-        this.postApiMapper = postApiMapper;
+        this.publicFeedEventsService = publicFeedEventsService;
+        this.eventApiMapper = eventApiMapper;
     }
 
     @Override
     @GetMapping(
-            value = PublicFeedApi.PATH_PUBLIC_FEED_LIST,
+            value = PublicEventsApi.PATH_PUBLIC_EVENTS_LIST,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<PageFeedItemSummary> publicFeedList(
-            final Integer page,
-            final Integer size
-    ) {
+    public ResponseEntity<PageEventSummary> publicEventsList(final Integer page, final Integer size) {
         final int safePage = page == null ? 0 : page;
         final int safeSize = size == null ? 20 : size;
         final String ifNoneMatch = getHeader("If-None-Match");
         final String ifModifiedSince = getHeader("If-Modified-Since");
-        final var version = publicFeedUseCase.getFeedVersion(safePage, safeSize);
+        final var version = publicFeedEventsService.getEventsVersion(safePage, safeSize);
 
         if (ifNoneMatch != null && !ifNoneMatch.isBlank()) {
             if (version.matchesEtag(ifNoneMatch)) {
@@ -64,21 +53,21 @@ public class PublicFeedController implements PublicFeedApi {
                     .build();
         }
 
-        final var items = publicFeedUseCase.listPublished(safePage, safeSize);
+        final var items = publicFeedEventsService.listPublished(safePage, safeSize);
         return ResponseEntity.ok()
                 .eTag(version.etag())
                 .lastModified(version.lastModifiedEpochMillis())
-                .body(feedApiMapper.toPageFeedItemSummary(items, safePage, safeSize));
+                .body(eventApiMapper.toPageEventSummary(items, safePage, safeSize));
     }
 
     @Override
     @GetMapping(
-            value = PublicFeedApi.PATH_PUBLIC_POST_GET_BY_SLUG,
+            value = PublicEventsApi.PATH_PUBLIC_EVENT_GET_BY_SLUG,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<PostDetails> publicPostGetBySlug(final String slug) {
-        final var post = publicPostsUseCase.getBySlug(slug);
-        return post.map(details -> ResponseEntity.ok(postApiMapper.toPostDetails(details)))
+    public ResponseEntity<EventDetails> publicEventGetBySlug(final String slug) {
+        final var event = publicFeedEventsService.getBySlug(slug);
+        return event.map(details -> ResponseEntity.ok(eventApiMapper.toEventDetails(details)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -95,4 +84,5 @@ public class PublicFeedController implements PublicFeedApi {
         return request.getHeader(name);
     }
 }
+
 

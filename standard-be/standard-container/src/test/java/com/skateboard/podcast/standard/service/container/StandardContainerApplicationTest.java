@@ -1,6 +1,6 @@
 package com.skateboard.podcast.standard.service.container;
 
-import com.skateboard.podcast.feed.service.application.adapter.in.rest.AdminPostController;
+import com.skateboard.podcast.feed.service.application.adapter.in.rest.AdminPostsController;
 import com.skateboard.podcast.feed.service.application.adapter.in.rest.PublicFeedController;
 import com.skateboard.podcast.iam.service.application.adapter.in.rest.PublicAuthController;
 import com.skateboard.podcast.iam.service.dataaccess.persistence.jpa.SpringDataUserRepository;
@@ -41,7 +41,8 @@ class StandardContainerApplicationTest {
     void contextLoadsWithHttpAndRepositories() {
         assertNotNull(context.getBean(PublicAuthController.class));
         assertNotNull(context.getBean(PublicFeedController.class));
-        assertNotNull(context.getBean(AdminPostController.class));
+        assertNotNull(context.getBean(AdminPostsController.class));
         assertNotNull(context.getBean(SpringDataUserRepository.class));
     }
 }
+

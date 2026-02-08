@@ -1,29 +1,33 @@
 package com.skateboard.podcast.feed.service.application.service;
 
 import com.skateboard.podcast.domain.exception.ValidationException;
+import com.skateboard.podcast.domain.valueobject.EventStatus;
 import com.skateboard.podcast.domain.valueobject.PostStatus;
 import com.skateboard.podcast.domain.valueobject.Slug;
 import com.skateboard.podcast.domain.valueobject.Tag;
+import com.skateboard.podcast.feed.service.application.dto.FeedVersion;
 import com.skateboard.podcast.feed.service.application.port.out.PostRepository;
+import com.skateboard.podcast.feed.service.events.application.port.out.EventRepository;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PublicFeedServiceTest {
 
     @Test
     void listPublishedValidatesPageAndSize() {
-        final PublicFeedService service = new PublicFeedService(new InMemoryPostRepository());
+        final PublicFeedService service = new PublicFeedService(
+                new InMemoryPostRepository(List.of()),
+                new InMemoryEventRepository(List.of())
+        );
 
         assertThrows(ValidationException.class, () -> service.listPublished(-1, 10));
         assertThrows(ValidationException.class, () -> service.listPublished(0, 0));
@@ -31,72 +35,147 @@ class PublicFeedServiceTest {
     }
 
     @Test
-    void getBySlugReturnsOnlyPublishedPosts() {
-        final InMemoryPostRepository repo = new InMemoryPostRepository();
-        final PublicFeedService service = new PublicFeedService(repo);
+    void listPublishedMergesBySortTimestamp() {
+        final PostRepository.PostRecord postLatest = postRecord(
+                "post-10",
+                Instant.parse("2024-01-10T00:00:00Z")
+        );
+        final PostRepository.PostRecord postOlder = postRecord(
+                "post-07",
+                Instant.parse("2024-01-07T00:00:00Z")
+        );
 
-        repo.save(postRecord("draft-post", PostStatus.DRAFT));
-        repo.save(postRecord("published-post", PostStatus.PUBLISHED));
+        final EventRepository.EventRecord eventNewest = eventRecord(
+                "event-09",
+                Instant.parse("2024-01-09T00:00:00Z")
+        );
+        final EventRepository.EventRecord eventOlder = eventRecord(
+                "event-08",
+                Instant.parse("2024-01-08T00:00:00Z")
+        );
 
-        assertFalse(service.getBySlug("draft-post").isPresent());
-        assertTrue(service.getBySlug("published-post").isPresent());
-        assertEquals("published-post", service.getBySlug("published-post").orElseThrow().slug());
+        final PublicFeedService service = new PublicFeedService(
+                new InMemoryPostRepository(List.of(postLatest, postOlder)),
+                new InMemoryEventRepository(List.of(eventNewest, eventOlder))
+        );
+
+        final var page0 = service.listPublished(0, 2);
+        assertEquals(2, page0.size());
+        assertEquals("post-10", page0.get(0).slug());
+        assertEquals("event-09", page0.get(1).slug());
+
+        final var page1 = service.listPublished(1, 2);
+        assertEquals(2, page1.size());
+        assertEquals("event-08", page1.get(0).slug());
+        assertEquals("post-07", page1.get(1).slug());
     }
 
-    private static PostRepository.PostRecord postRecord(final String slug, final PostStatus status) {
+    @Test
+    void getFeedVersionUsesMaxUpdatedAtAndTotalCount() {
+        final PostRepository.PostRecord postLatest = postRecord(
+                "post-10",
+                Instant.parse("2024-01-10T00:00:00Z")
+        );
+        final PostRepository.PostRecord postOlder = postRecord(
+                "post-07",
+                Instant.parse("2024-01-07T00:00:00Z")
+        );
+        final EventRepository.EventRecord eventNewest = eventRecord(
+                "event-09",
+                Instant.parse("2024-02-01T00:00:00Z")
+        );
+
+        final PublicFeedService service = new PublicFeedService(
+                new InMemoryPostRepository(List.of(postLatest, postOlder)),
+                new InMemoryEventRepository(List.of(eventNewest))
+        );
+
+        final FeedVersion version = service.getFeedVersion(0, 20);
+        assertEquals(Instant.parse("2024-02-01T00:00:00Z"), version.lastUpdatedAt());
+        assertEquals(
+                FeedVersion.buildEtag(version.lastUpdatedAt(), 3, 0, 20),
+                version.etag()
+        );
+    }
+
+    private static PostRepository.PostRecord postRecord(final String slug, final Instant publishedAt) {
         return new PostRepository.PostRecord(
                 UUID.randomUUID(),
                 "Title",
                 Slug.of(slug),
                 "Excerpt",
                 List.of(Tag.of("tech")),
-                status,
+                PostStatus.PUBLISHED,
                 null,
                 "[]",
                 UUID.randomUUID(),
                 Instant.parse("2024-01-01T00:00:00Z"),
+                publishedAt,
+                publishedAt
+        );
+    }
+
+    private static EventRepository.EventRecord eventRecord(final String slug, final Instant startAt) {
+        return new EventRepository.EventRecord(
+                UUID.randomUUID(),
+                "Event",
+                Slug.of(slug),
+                "Excerpt",
+                List.of(Tag.of("street")),
+                EventStatus.PUBLISHED,
+                null,
+                "[]",
+                startAt,
+                startAt.plusSeconds(3600),
+                "UTC",
+                "Plaza",
+                "https://tickets.example.com",
+                UUID.randomUUID(),
                 Instant.parse("2024-01-01T00:00:00Z"),
-                status == PostStatus.PUBLISHED ? Instant.parse("2024-01-02T00:00:00Z") : null
+                startAt
         );
     }
 
     private static final class InMemoryPostRepository implements PostRepository {
-        private final Map<String, PostRecord> bySlug = new HashMap<>();
-        private final Map<UUID, PostRecord> byId = new HashMap<>();
+        private final List<PostRecord> records;
+
+        private InMemoryPostRepository(final List<PostRecord> records) {
+            this.records = new ArrayList<>(records);
+        }
 
         @Override
         public Optional<PostRecord> findBySlug(final Slug slug) {
-            return Optional.ofNullable(bySlug.get(slug.value()));
+            return records.stream().filter(record -> record.slug().equals(slug)).findFirst();
         }
 
         @Override
         public Optional<PostRecord> findById(final UUID id) {
-            return Optional.ofNullable(byId.get(id));
+            return records.stream().filter(record -> record.id().equals(id)).findFirst();
         }
 
         @Override
         public List<PostRecord> findAll(final int page, final int size) {
-            return List.copyOf(byId.values());
+            return List.copyOf(records);
         }
 
         @Override
         public List<PostRecord> findByStatus(final PostStatus status, final int page, final int size) {
-            return byId.values().stream()
-                    .filter(post -> post.status() == status)
-                    .toList();
+            return records.stream().filter(record -> record.status() == status).toList();
         }
 
         @Override
         public List<PostRecord> findPublished(final int page, final int size) {
-            return bySlug.values().stream()
-                    .filter(post -> post.status() == PostStatus.PUBLISHED)
+            final List<PostRecord> published = records.stream()
+                    .filter(record -> record.status() == PostStatus.PUBLISHED)
+                    .sorted(Comparator.comparing(PostRecord::publishedAt).reversed())
                     .toList();
+            return slice(published, page, size);
         }
 
         @Override
         public FeedStats fetchPublishedFeedStats() {
-            final var published = bySlug.values().stream()
-                    .filter(post -> post.status() == PostStatus.PUBLISHED)
+            final List<PostRecord> published = records.stream()
+                    .filter(record -> record.status() == PostStatus.PUBLISHED)
                     .toList();
             final Instant lastUpdatedAt = published.stream()
                     .map(PostRecord::updatedAt)
@@ -107,23 +186,95 @@ class PublicFeedServiceTest {
 
         @Override
         public PostRecord save(final PostRecord post) {
-            bySlug.put(post.slug().value(), post);
-            byId.put(post.id(), post);
+            records.add(post);
             return post;
         }
 
         @Override
         public void deleteById(final UUID id) {
-            final PostRecord existing = byId.remove(id);
-            if (existing != null) {
-                bySlug.remove(existing.slug().value());
-            }
+            records.removeIf(record -> record.id().equals(id));
         }
 
         @Override
         public void deleteAll() {
-            byId.clear();
-            bySlug.clear();
+            records.clear();
         }
+    }
+
+    private static final class InMemoryEventRepository implements EventRepository {
+        private final List<EventRecord> records;
+
+        private InMemoryEventRepository(final List<EventRecord> records) {
+            this.records = new ArrayList<>(records);
+        }
+
+        @Override
+        public Optional<EventRecord> findBySlug(final Slug slug) {
+            return records.stream().filter(record -> record.slug().equals(slug)).findFirst();
+        }
+
+        @Override
+        public Optional<EventRecord> findById(final UUID id) {
+            return records.stream().filter(record -> record.id().equals(id)).findFirst();
+        }
+
+        @Override
+        public List<EventRecord> findAll(final int page, final int size) {
+            return List.copyOf(records);
+        }
+
+        @Override
+        public List<EventRecord> findByStatus(final EventStatus status, final int page, final int size) {
+            return records.stream().filter(record -> record.status() == status).toList();
+        }
+
+        @Override
+        public List<EventRecord> findPublished(final int page, final int size) {
+            final List<EventRecord> published = records.stream()
+                    .filter(record -> record.status() == EventStatus.PUBLISHED)
+                    .sorted(Comparator.comparing(EventRecord::startAt).reversed())
+                    .toList();
+            return slice(published, page, size);
+        }
+
+        @Override
+        public EventStats fetchPublishedStats() {
+            final List<EventRecord> published = records.stream()
+                    .filter(record -> record.status() == EventStatus.PUBLISHED)
+                    .toList();
+            final Instant lastUpdatedAt = published.stream()
+                    .map(EventRecord::updatedAt)
+                    .max(Instant::compareTo)
+                    .orElse(null);
+            return new EventStats(lastUpdatedAt, published.size());
+        }
+
+        @Override
+        public EventRecord save(final EventRecord event) {
+            records.add(event);
+            return event;
+        }
+
+        @Override
+        public void deleteById(final UUID id) {
+            records.removeIf(record -> record.id().equals(id));
+        }
+
+        @Override
+        public void deleteAll() {
+            records.clear();
+        }
+    }
+
+    private static <T> List<T> slice(final List<T> items, final int page, final int size) {
+        if (size <= 0) {
+            return List.of();
+        }
+        final int from = page * size;
+        if (from >= items.size()) {
+            return List.of();
+        }
+        final int to = Math.min(from + size, items.size());
+        return items.subList(from, to);
     }
 }

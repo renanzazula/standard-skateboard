@@ -103,6 +103,14 @@ components:
       type: string
       enum: [ DRAFT, PUBLISHED, ARCHIVED ]
 
+    FeedItemType:
+      type: string
+      enum: [ POST, EVENT ]
+
+    FeedItemStatus:
+      type: string
+      enum: [ DRAFT, PUBLISHED, ARCHIVED ]
+
     ImageRef:
       type: object
       required: [ url ]
@@ -296,6 +304,30 @@ components:
         updatedAt: { type: string, format: date-time }
         createdBy: { type: string }
 
+    FeedItemSummary:
+      type: object
+      required: [ type, id, title, slug, status, tags ]
+      properties:
+        type: { $ref: '#/components/schemas/FeedItemType' }
+        id: { type: string, format: uuid }
+        title: { type: string }
+        slug: { type: string }
+        excerpt: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        status: { $ref: '#/components/schemas/FeedItemStatus' }
+        thumbnail: { $ref: '#/components/schemas/ImageRef' }
+        publishedAt: { type: string, format: date-time }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        timezone: { type: string }
+        location: { type: string }
+        ticketsUrl: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        createdBy: { type: string, format: uuid }
+
     EventStatus:
       type: string
       enum: [ DRAFT, PUBLISHED, ARCHIVED ]
@@ -350,6 +382,17 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/PostSummary' }
+        page: { type: integer }
+        size: { type: integer }
+        totalItems: { type: integer }
+
+    PageFeedItemSummary:
+      type: object
+      required: [ items, page, size ]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/FeedItemSummary' }
         page: { type: integer }
         size: { type: integer }
         totalItems: { type: integer }
@@ -535,7 +578,7 @@ paths:
           description: Feed page
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/PagePostSummary' }
+              schema: { $ref: '#/components/schemas/PageFeedItemSummary' }
 
   /public/posts/{slug}:
     get:
