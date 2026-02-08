@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/public/feed").permitAll()
                         .requestMatchers(HttpMethod.GET, "/public/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/events").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/public/auth/admin-passcode").permitAll()

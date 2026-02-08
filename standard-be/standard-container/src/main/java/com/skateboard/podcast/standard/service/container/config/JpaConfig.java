@@ -7,11 +7,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 @EnableJpaRepositories(basePackages = {
         "com.skateboard.podcast.iam.service.dataaccess.persistence.jpa",
-        "com.skateboard.podcast.feed.service.dataaccess.persistence.jpa"
+        "com.skateboard.podcast.feed.service.dataaccess.persistence.jpa",
+        "com.skateboard.podcast.event.service.dataaccess.persistence.jpa"
 })
 @EntityScan(basePackages = {
         "com.skateboard.podcast.iam.service.dataaccess.persistence.jpa",
-        "com.skateboard.podcast.feed.service.dataaccess.persistence.jpa"
+        "com.skateboard.podcast.feed.service.dataaccess.persistence.jpa",
+        "com.skateboard.podcast.event.service.dataaccess.persistence.jpa"
 })
 public class JpaConfig {
 }

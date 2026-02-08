@@ -296,6 +296,53 @@ components:
         updatedAt: { type: string, format: date-time }
         createdBy: { type: string }
 
+    EventStatus:
+      type: string
+      enum: [ DRAFT, PUBLISHED, ARCHIVED ]
+
+    EventSummary:
+      type: object
+      required: [ id, title, slug, status, tags ]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        slug: { type: string }
+        excerpt: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        thumbnail: { $ref: '#/components/schemas/ImageRef' }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        timezone: { type: string }
+        location: { type: string }
+        ticketsUrl: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        createdBy: { type: string, format: uuid }
+
+    EventDetails:
+      allOf:
+        - $ref: '#/components/schemas/EventSummary'
+        - type: object
+          required: [ content ]
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/Block' }
+
+    PageEventSummary:
+      type: object
+      required: [ items, page, size ]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/EventSummary' }
+        page: { type: integer }
+        size: { type: integer }
+        totalItems: { type: integer }
+
     PagePostSummary:
       type: object
       required: [ items, page, size ]
@@ -348,6 +395,38 @@ components:
     UpdatePostRequest:
       allOf:
         - $ref: '#/components/schemas/CreatePostRequest'
+
+    CreateEventRequest:
+      type: object
+      required: [ title, slug, content ]
+      properties:
+        title: { type: string }
+        slug: { type: string }
+        excerpt: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        thumbnail: { $ref: '#/components/schemas/ImageRef' }
+        content:
+          type: array
+          items: { $ref: '#/components/schemas/Block' }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        timezone: { type: string }
+        location: { type: string }
+        ticketsUrl: { type: string }
+
+    UpdateEventRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateEventRequest'
+
+    ImportEventsRequest:
+      type: object
+      required: [ items ]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CreateEventRequest' }
 
 paths:
   /public/auth/register:
@@ -474,6 +553,40 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/PostDetails' }
 
+  /public/events:
+    get:
+      tags: [ PublicEvents ]
+      operationId: publicEventsList
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20, minimum: 1, maximum: 50 }
+      responses:
+        "200":
+          description: Events page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PageEventSummary' }
+
+  /public/events/{slug}:
+    get:
+      tags: [ PublicEvents ]
+      operationId: publicEventGetBySlug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Event details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetails' }
+
   /public/app-config:
     get:
       tags: [ PublicConfig ]
@@ -553,6 +666,45 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/PostDetails' }
 
+  /admin/events:
+    get:
+      tags: [ AdminEvents ]
+      operationId: adminEventList
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20, minimum: 1, maximum: 50 }
+        - in: query
+          name: status
+          schema: { $ref: '#/components/schemas/EventStatus' }
+      responses:
+        "200":
+          description: Admin event page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PageEventSummary' }
+    post:
+      tags: [ AdminEvents ]
+      operationId: adminEventCreate
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateEventRequest' }
+      responses:
+        "201":
+          description: Created draft
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetails' }
+
   /admin/posts/{id}:
     get:
       tags: [ AdminPosts ]
@@ -605,6 +757,58 @@ paths:
         "204":
           description: Deleted
 
+  /admin/events/{id}:
+    get:
+      tags: [ AdminEvents ]
+      operationId: adminEventGet
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Event details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetails' }
+    put:
+      tags: [ AdminEvents ]
+      operationId: adminEventUpdate
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateEventRequest' }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetails' }
+    delete:
+      tags: [ AdminEvents ]
+      operationId: adminEventDelete
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Deleted
+
   /admin/posts/{id}/publish:
     post:
       tags: [ AdminPosts ]
@@ -622,6 +826,24 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PostDetails' }
+
+  /admin/events/{id}/publish:
+    post:
+      tags: [ AdminEvents ]
+      operationId: adminEventPublish
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Published
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetails' }
 
   /admin/posts/import:
     post:
@@ -643,10 +865,40 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/PostSummary' }
 
+  /admin/events/import:
+    post:
+      tags: [ AdminEvents ]
+      operationId: adminEventImport
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportEventsRequest' }
+      responses:
+        "200":
+          description: Imported
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/EventSummary' }
+
   /admin/posts/reset:
     post:
       tags: [ AdminPosts ]
       operationId: adminPostReset
+      security:
+        - bearerAuth: [ ]
+      responses:
+        "204":
+          description: Reset complete
+
+  /admin/events/reset:
+    post:
+      tags: [ AdminEvents ]
+      operationId: adminEventReset
       security:
         - bearerAuth: [ ]
       responses:
