@@ -2,36 +2,42 @@ package com.skateboard.podcast.standard.service.container.appconfig;
 
 import com.skateboard.podcast.domain.exception.ValidationException;
 import com.skateboard.podcast.standardbe.api.model.AppConfig;
+import com.skateboard.podcast.standard.service.container.appconfig.persistence.jpa.AppConfigJpaEntity;
+import com.skateboard.podcast.standard.service.container.appconfig.persistence.jpa.AppConfigRepository;
 import com.skateboard.podcast.standardbe.api.model.SplashConfig;
 import com.skateboard.podcast.standardbe.api.model.SplashMediaType;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class AppConfigStore {
 
+    private static final long CONFIG_ID = 1L;
     private static final int MIN_POSTS_PER_PAGE = 5;
     private static final int MAX_POSTS_PER_PAGE = 50;
 
+    private final AppConfigRepository repository;
     private final AppConfigEventPublisher eventPublisher;
-    private final AtomicReference<AppConfig> current =
-            new AtomicReference<>(defaultConfig());
 
-    public AppConfigStore(final AppConfigEventPublisher eventPublisher) {
+    public AppConfigStore(
+            final AppConfigRepository repository,
+            final AppConfigEventPublisher eventPublisher
+    ) {
+        this.repository = repository;
         this.eventPublisher = eventPublisher;
     }
 
     public AppConfig get() {
-        return copy(current.get());
+        return toApiConfig(loadOrCreate());
     }
 
     public AppConfig update(final AppConfig updated) {
         validate(updated);
-        current.set(copy(updated));
+        final AppConfigJpaEntity entity = toEntity(updated, loadOrCreate());
+        repository.save(entity);
         eventPublisher.publishConfigUpdated(Instant.now());
-        return get();
+        return toApiConfig(entity);
     }
 
     private static AppConfig defaultConfig() {
@@ -45,6 +51,17 @@ public class AppConfigStore {
                         .duration(0)
                         .showCloseButton(true)
                         .closeButtonDelay(0));
+    }
+
+    private AppConfigJpaEntity loadOrCreate() {
+        return repository.findById(CONFIG_ID)
+                .orElseGet(this::createDefault);
+    }
+
+    private AppConfigJpaEntity createDefault() {
+        final AppConfigJpaEntity entity = toEntity(defaultConfig(), new AppConfigJpaEntity());
+        entity.setId(CONFIG_ID);
+        return repository.save(entity);
     }
 
     private static void validate(final AppConfig config) {
@@ -83,26 +100,31 @@ public class AppConfigStore {
         }
     }
 
-    private static AppConfig copy(final AppConfig source) {
-        if (source == null) {
-            return null;
-        }
-        return new AppConfig()
-                .socialLoginEnabled(source.getSocialLoginEnabled())
-                .postsPerPage(source.getPostsPerPage())
-                .splash(copy(source.getSplash()));
+    private static AppConfigJpaEntity toEntity(final AppConfig source, final AppConfigJpaEntity target) {
+        target.setSocialLoginEnabled(source.getSocialLoginEnabled());
+        target.setPostsPerPage(source.getPostsPerPage());
+        target.setSplashEnabled(source.getSplash().getEnabled());
+        target.setSplashMediaType(source.getSplash().getMediaType().getValue());
+        target.setSplashMediaUrl(source.getSplash().getMediaUrl());
+        target.setSplashDuration(source.getSplash().getDuration());
+        target.setSplashShowCloseButton(source.getSplash().getShowCloseButton());
+        target.setSplashCloseButtonDelay(source.getSplash().getCloseButtonDelay());
+        return target;
     }
 
-    private static SplashConfig copy(final SplashConfig source) {
-        if (source == null) {
-            return null;
+    private static AppConfig toApiConfig(final AppConfigJpaEntity entity) {
+        if (entity == null) {
+            return defaultConfig();
         }
-        return new SplashConfig()
-                .enabled(source.getEnabled())
-                .mediaType(source.getMediaType())
-                .mediaUrl(source.getMediaUrl())
-                .duration(source.getDuration())
-                .showCloseButton(source.getShowCloseButton())
-                .closeButtonDelay(source.getCloseButtonDelay());
+        return new AppConfig()
+                .socialLoginEnabled(entity.getSocialLoginEnabled())
+                .postsPerPage(entity.getPostsPerPage())
+                .splash(new SplashConfig()
+                        .enabled(entity.getSplashEnabled())
+                        .mediaType(SplashMediaType.fromValue(entity.getSplashMediaType()))
+                        .mediaUrl(entity.getSplashMediaUrl())
+                        .duration(entity.getSplashDuration())
+                        .showCloseButton(entity.getSplashShowCloseButton())
+                        .closeButtonDelay(entity.getSplashCloseButtonDelay()));
     }
 }
