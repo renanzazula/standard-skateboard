@@ -110,7 +110,9 @@ public class RefreshService implements RefreshUseCase {
                 UserId.of(user.id()),
                 user.email(),
                 user.role(),
-                user.provider()
+                user.provider(),
+                user.name(),
+                user.avatarUrl()
         );
     }
 }

@@ -1,4 +1,4 @@
-package com.skateboard.podcast.feed.service.events.application.adapter.in.rest;
+package com.skateboard.podcast.feed.service.application.adapter.in.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

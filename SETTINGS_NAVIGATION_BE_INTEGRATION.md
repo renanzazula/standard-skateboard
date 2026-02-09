@@ -29,8 +29,8 @@ navigation config, which is persisted to the backend and broadcast to clients vi
   "tabs": [
     {
       "id": "index",
-      "name": "Feed",
-      "icon": "Feed",
+      "name": "Events",
+      "icon": "Calendar",
       "order": 0,
       "enabled": true,
       "isSystem": true
@@ -54,7 +54,7 @@ Field rules:
 - `icon`: Lucide icon name used by FE.
 - `order`: 0-based tab order.
 - `enabled`: Whether the tab is visible.
-- `isSystem`: System tabs cannot be removed; FE forces `settings` to always be enabled.
+- `isSystem`: System tabs cannot be removed; `settings` must remain `true`.
 
 ## Client Behavior
 
@@ -73,12 +73,16 @@ Field rules:
 
 ## WebSocket Event
 
-Recommended event payload:
+Event payload (as sent by the backend):
 
 ```json
 {
   "type": "navigation.updated",
-  "timestamp": "2026-02-08T20:15:00.000Z"
+  "version": 1,
+  "timestamp": "2026-02-08T20:15:00.000Z",
+  "payload": {
+    "updatedAt": "2026-02-08T20:15:00.000Z"
+  }
 }
 ```
 
@@ -89,5 +93,5 @@ The FE listens for event types containing `navigation` or `config` and refetches
 - The FE currently maps `route = id` for tabs. If the backend needs a different route value, add a `route` field to
   the `NavigationTab` schema and update FE mapping.
 - System tabs:
-  - `settings` must remain enabled.
-  - `index` (Feed) is the default landing tab.
+  - `settings` must remain enabled and `isSystem = true`.
+  - `index` must remain enabled and is the default landing tab.

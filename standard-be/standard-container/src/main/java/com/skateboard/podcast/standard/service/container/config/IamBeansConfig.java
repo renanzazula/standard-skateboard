@@ -1,17 +1,21 @@
 package com.skateboard.podcast.standard.service.container.config;
 
 import com.skateboard.podcast.iam.service.application.service.AdminPasscodeLoginService;
+import com.skateboard.podcast.iam.service.application.service.AdminUsersService;
 import com.skateboard.podcast.iam.service.application.service.LoginService;
 import com.skateboard.podcast.iam.service.application.service.LogoutService;
 import com.skateboard.podcast.iam.service.application.service.RefreshService;
 import com.skateboard.podcast.iam.service.application.service.RegisterService;
 import com.skateboard.podcast.iam.service.application.service.SocialLoginService;
+import com.skateboard.podcast.iam.service.application.service.UserProfileService;
 import com.skateboard.podcast.iam.service.application.port.in.AdminPasscodeLoginUseCase;
+import com.skateboard.podcast.iam.service.application.port.in.AdminUsersUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.LoginUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.LogoutUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.RefreshUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.RegisterUseCase;
 import com.skateboard.podcast.iam.service.application.port.in.SocialLoginUseCase;
+import com.skateboard.podcast.iam.service.application.port.in.UserProfileUseCase;
 import com.skateboard.podcast.iam.service.application.port.out.PasswordHasher;
 import com.skateboard.podcast.iam.service.application.port.out.RefreshTokenRepository;
 import com.skateboard.podcast.iam.service.application.port.out.TokenProvider;
@@ -81,5 +85,15 @@ public class IamBeansConfig {
             final TokenProvider tokenProvider
     ) {
         return new SocialLoginService(userRepository, refreshTokenRepository, tokenProvider);
+    }
+
+    @Bean
+    public UserProfileUseCase userProfileService(final UserRepository userRepository) {
+        return new UserProfileService(userRepository);
+    }
+
+    @Bean
+    public AdminUsersUseCase adminUsersService(final UserRepository userRepository) {
+        return new AdminUsersService(userRepository);
     }
 }

@@ -50,13 +50,20 @@ public class RegisterService implements RegisterUseCase {
         final UUID userId = UUID.randomUUID();
         final String passwordHash = passwordHasher.hash(password);
 
+        final Instant now = Instant.now();
         final var user = new UserRepository.UserRecord(
                 userId,
                 emailValue,
                 passwordHash,
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                null,
+                null,
+                null,
+                now,
+                now,
+                now
         );
 
         userRepository.save(user);
@@ -69,7 +76,6 @@ public class RegisterService implements RegisterUseCase {
         final String rawRefresh = tokenProvider.newRefreshToken();
         final String refreshHash = tokenProvider.hashRefreshToken(rawRefresh);
 
-        final Instant now = Instant.now();
         final Instant refreshExp = now.plusSeconds(tokenProvider.refreshTtlSeconds());
         final UUID familyId = UUID.randomUUID();
 
@@ -95,7 +101,9 @@ public class RegisterService implements RegisterUseCase {
                 UserId.of(userId),
                 user.email(),
                 user.role(),
-                user.provider()
+                user.provider(),
+                user.name(),
+                user.avatarUrl()
         );
     }
 }

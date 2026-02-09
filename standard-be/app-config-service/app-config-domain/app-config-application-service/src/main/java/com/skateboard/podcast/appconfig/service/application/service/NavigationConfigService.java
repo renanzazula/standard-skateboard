@@ -18,6 +18,7 @@ public class NavigationConfigService implements NavigationConfigUseCase {
 
     private static final long CONFIG_ID = 1L;
     private static final String SETTINGS_TAB_ID = "settings";
+    private static final String INDEX_TAB_ID = "index";
 
     private final NavigationConfigRepository repository;
     private final NavigationConfigEventPublisher eventPublisher;
@@ -90,6 +91,7 @@ public class NavigationConfigService implements NavigationConfigUseCase {
 
         final Set<String> ids = new HashSet<>();
         boolean settingsFound = false;
+        boolean indexFound = false;
 
         for (final NavigationTabView tab : config.tabs()) {
             if (tab == null) {
@@ -123,11 +125,23 @@ public class NavigationConfigService implements NavigationConfigUseCase {
                 if (!tab.enabled()) {
                     throw new ValidationException("settings tab must remain enabled");
                 }
+                if (!tab.isSystem()) {
+                    throw new ValidationException("settings tab must remain system");
+                }
+            }
+            if (INDEX_TAB_ID.equals(id)) {
+                indexFound = true;
+                if (!tab.enabled()) {
+                    throw new ValidationException("index tab must remain enabled");
+                }
             }
         }
 
         if (!settingsFound) {
             throw new ValidationException("settings tab must remain enabled");
+        }
+        if (!indexFound) {
+            throw new ValidationException("index tab must remain enabled");
         }
     }
 

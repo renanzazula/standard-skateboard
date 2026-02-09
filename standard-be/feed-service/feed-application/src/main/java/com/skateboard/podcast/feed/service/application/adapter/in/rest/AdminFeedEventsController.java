@@ -1,4 +1,4 @@
-package com.skateboard.podcast.feed.service.events.application.adapter.in.rest;
+package com.skateboard.podcast.feed.service.application.adapter.in.rest;
 
 import com.skateboard.podcast.domain.security.CurrentUser;
 import com.skateboard.podcast.feed.service.events.application.dto.FeedEventImportCommand;

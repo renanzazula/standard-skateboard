@@ -10,6 +10,7 @@ import com.skateboard.podcast.domain.valueobject.UserStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -32,6 +33,13 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public List<UserRecord> findAll() {
+        return repo.findAll().stream()
+                .map(UserRepositoryAdapter::toRecord)
+                .toList();
+    }
+
+    @Override
     public UserRecord save(final UserRecord user) {
         final UserJpaEntity e = new UserJpaEntity();
         e.setId(user.id());
@@ -40,10 +48,19 @@ public class UserRepositoryAdapter implements UserRepository {
         e.setRole(user.role().name());
         e.setProvider(user.provider().name());
         e.setStatus(user.status().name());
-        e.setCreatedAt(Instant.now());
-        e.setUpdatedAt(Instant.now());
+        e.setName(user.name());
+        e.setUsername(user.username());
+        e.setAvatarUrl(user.avatarUrl());
+        e.setCreatedAt(user.createdAt() == null ? Instant.now() : user.createdAt());
+        e.setUpdatedAt(user.updatedAt() == null ? Instant.now() : user.updatedAt());
+        e.setLastLoginAt(user.lastLoginAt());
         repo.save(e);
         return user;
+    }
+
+    @Override
+    public void deleteById(final java.util.UUID id) {
+        repo.deleteById(id);
     }
 
     private static UserRecord toRecord(final UserJpaEntity e) {
@@ -53,7 +70,13 @@ public class UserRepositoryAdapter implements UserRepository {
                 e.getPasswordHash(),
                 Role.from(e.getRole()),
                 Provider.from(e.getProvider()),
-                UserStatus.from(e.getStatus())
+                UserStatus.from(e.getStatus()),
+                e.getName(),
+                e.getUsername(),
+                e.getAvatarUrl(),
+                e.getCreatedAt(),
+                e.getUpdatedAt(),
+                e.getLastLoginAt()
         );
     }
 }

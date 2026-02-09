@@ -21,6 +21,14 @@ components:
       type: string
       enum: [ MANUAL, GOOGLE, APPLE, FACEBOOK, PASSCODE ]
 
+    UserStatus:
+      type: string
+      enum: [ ACTIVE, DISABLED ]
+
+    ServiceMode:
+      type: string
+      enum: [ mock, real ]
+
     AuthTokens:
       type: object
       required: [ accessToken, expiresInSeconds, refreshToken, refreshExpiresInSeconds ]
@@ -40,6 +48,54 @@ components:
         provider: { $ref: '#/components/schemas/Provider' }
         name: { type: string }
         avatarUrl: { type: string, format: uri }
+
+    UserProfile:
+      type: object
+      required: [ id, role, provider, email ]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        provider: { $ref: '#/components/schemas/Provider' }
+        name: { type: string }
+        username: { type: string }
+        avatarUrl: { type: string, format: uri }
+
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        username: { type: string }
+        avatarUrl: { type: string, format: uri }
+
+    AdminUser:
+      type: object
+      required: [ id, email, role, provider, status, createdAt, updatedAt ]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        provider: { $ref: '#/components/schemas/Provider' }
+        status: { $ref: '#/components/schemas/UserStatus' }
+        name: { type: string }
+        username: { type: string }
+        avatarUrl: { type: string, format: uri }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        lastLoginAt: { type: string, format: date-time }
+
+    AdminUserUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        username: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+
+    AdminUserStatusUpdateRequest:
+      type: object
+      required: [ status ]
+      properties:
+        status: { $ref: '#/components/schemas/UserStatus' }
 
     LoginRequest:
       type: object
@@ -153,12 +209,24 @@ components:
       type: object
       required: [ id, name, icon, order, enabled, isSystem ]
       properties:
-        id: { type: string }
-        name: { type: string }
-        icon: { type: string }
-        order: { type: integer }
-        enabled: { type: boolean }
-        isSystem: { type: boolean }
+        id:
+          type: string
+          description: Tab identifier (Expo Router route). `index` must be present and enabled.
+        name:
+          type: string
+          description: Tab label shown in the UI.
+        icon:
+          type: string
+          description: Lucide icon name used by the app.
+        order:
+          type: integer
+          description: 0-based tab order.
+        enabled:
+          type: boolean
+          description: Whether the tab is visible. `settings` and `index` must remain enabled.
+        isSystem:
+          type: boolean
+          description: System tabs cannot be removed. `settings` must remain true.
 
     NavigationConfig:
       type: object
@@ -167,6 +235,70 @@ components:
         tabs:
           type: array
           items: { $ref: '#/components/schemas/NavigationTab' }
+      description: Tabs must include `settings` (enabled, isSystem=true) and `index` (enabled).
+
+    SettingsAuthMethods:
+      type: object
+      required: [ google, apple, manual ]
+      properties:
+        google: { type: boolean }
+        apple: { type: boolean }
+        manual: { type: boolean }
+
+    SettingsServiceModes:
+      type: object
+      required: [ google, apple, manual ]
+      properties:
+        google: { $ref: '#/components/schemas/ServiceMode' }
+        apple: { $ref: '#/components/schemas/ServiceMode' }
+        manual: { $ref: '#/components/schemas/ServiceMode' }
+
+    SessionConfig:
+      type: object
+      required: [ maxTime, idleTime, autoRefresh ]
+      properties:
+        maxTime: { type: integer, minimum: 300000, maximum: 86400000 }
+        idleTime: { type: integer, minimum: 300000, maximum: 86400000 }
+        autoRefresh: { type: boolean }
+
+    Language:
+      type: object
+      required: [ code, name, nativeName, flag ]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        nativeName: { type: string }
+        flag: { type: string }
+
+    LanguageConfig:
+      type: object
+      required: [ availableLanguages, defaultLanguage ]
+      properties:
+        availableLanguages:
+          type: array
+          items: { $ref: '#/components/schemas/Language' }
+        defaultLanguage: { $ref: '#/components/schemas/Language' }
+
+    ProfileConfig:
+      type: object
+      required: [ usernameMinLength, usernameMaxLength, avatarMaxSizeMB, allowedAvatarFormats ]
+      properties:
+        usernameMinLength: { type: integer, minimum: 1 }
+        usernameMaxLength: { type: integer, minimum: 2 }
+        avatarMaxSizeMB: { type: integer, minimum: 1 }
+        allowedAvatarFormats:
+          type: array
+          items: { type: string }
+
+    SettingsConfig:
+      type: object
+      required: [ enabledAuthMethods, serviceModes, sessionConfig, languageConfig, profileConfig ]
+      properties:
+        enabledAuthMethods: { $ref: '#/components/schemas/SettingsAuthMethods' }
+        serviceModes: { $ref: '#/components/schemas/SettingsServiceModes' }
+        sessionConfig: { $ref: '#/components/schemas/SessionConfig' }
+        languageConfig: { $ref: '#/components/schemas/LanguageConfig' }
+        profileConfig: { $ref: '#/components/schemas/ProfileConfig' }
 
     BlockType:
       type: string
@@ -581,6 +713,109 @@ paths:
         "204":
           description: Logged out
 
+  /users/me:
+    get:
+      tags: [ UserProfile ]
+      operationId: userProfileGet
+      security:
+        - bearerAuth: [ ]
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserProfile' }
+    put:
+      tags: [ UserProfile ]
+      operationId: userProfileUpdate
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserProfileUpdateRequest' }
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserProfile' }
+
+  /admin/users:
+    get:
+      tags: [ AdminUsers ]
+      operationId: adminUserList
+      security:
+        - bearerAuth: [ ]
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminUser' }
+
+  /admin/users/{id}:
+    put:
+      tags: [ AdminUsers ]
+      operationId: adminUserUpdate
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminUserUpdateRequest' }
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminUser' }
+    delete:
+      tags: [ AdminUsers ]
+      operationId: adminUserDelete
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/users/{id}/status:
+    patch:
+      tags: [ AdminUsers ]
+      operationId: adminUserStatusUpdate
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminUserStatusUpdateRequest' }
+      responses:
+        "200":
+          description: Updated user status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminUser' }
+
   /public/feed:
     get:
       tags: [ PublicFeed ]
@@ -692,6 +927,17 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/AppConfig' }
 
+  /public/settings-config:
+    get:
+      tags: [ PublicSettingsConfig ]
+      operationId: publicSettingsConfigGet
+      responses:
+        "200":
+          description: Public settings configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SettingsConfig' }
+
   /admin/app-config:
     get:
       tags: [ AdminConfig ]
@@ -720,6 +966,35 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AppConfig' }
+
+  /admin/settings-config:
+    get:
+      tags: [ AdminSettingsConfig ]
+      operationId: adminSettingsConfigGet
+      security:
+        - bearerAuth: [ ]
+      responses:
+        "200":
+          description: Admin settings configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SettingsConfig' }
+    put:
+      tags: [ AdminSettingsConfig ]
+      operationId: adminSettingsConfigUpdate
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SettingsConfig' }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SettingsConfig' }
 
   /public/navigation-config:
     get:

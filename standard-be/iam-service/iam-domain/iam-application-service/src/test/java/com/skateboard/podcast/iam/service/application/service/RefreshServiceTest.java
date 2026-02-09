@@ -30,13 +30,20 @@ class RefreshServiceTest {
         final RefreshService service = new RefreshService(refreshRepo, userRepo, tokenProvider);
 
         final UUID userId = UUID.randomUUID();
+        final Instant now = Instant.now();
         userRepo.save(new UserRepository.UserRecord(
                 userId,
                 Email.of("user@example.com"),
                 "hash",
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                "Skater",
+                "skater",
+                null,
+                now,
+                now,
+                null
         ));
 
         final UUID familyId = UUID.randomUUID();
@@ -82,13 +89,20 @@ class RefreshServiceTest {
         final RefreshService service = new RefreshService(refreshRepo, userRepo, tokenProvider);
 
         final UUID userId = UUID.randomUUID();
+        final Instant now = Instant.now();
         userRepo.save(new UserRepository.UserRecord(
                 userId,
                 Email.of("user@example.com"),
                 "hash",
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                "Skater",
+                "skater",
+                null,
+                now,
+                now,
+                null
         ));
 
         final UUID familyId = UUID.randomUUID();
@@ -204,6 +218,19 @@ class RefreshServiceTest {
             byId.put(user.id(), user);
             byEmail.put(user.email().value(), user.id());
             return user;
+        }
+
+        @Override
+        public java.util.List<UserRecord> findAll() {
+            return byId.values().stream().toList();
+        }
+
+        @Override
+        public void deleteById(final UUID id) {
+            final UserRecord removed = byId.remove(id);
+            if (removed != null) {
+                byEmail.remove(removed.email().value());
+            }
         }
     }
 

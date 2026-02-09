@@ -1,0 +1,5 @@
+ALTER TABLE users
+    ADD COLUMN name VARCHAR(120),
+    ADD COLUMN username VARCHAR(120),
+    ADD COLUMN avatar_url VARCHAR(500),
+    ADD COLUMN last_login_at TIMESTAMPTZ;

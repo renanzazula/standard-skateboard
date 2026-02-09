@@ -108,7 +108,9 @@ class PublicAuthControllerTest {
                 UserId.of(userId),
                 Email.of("user@example.com"),
                 Role.USER,
-                Provider.MANUAL
+                Provider.MANUAL,
+                "Skater",
+                "https://example.com/avatar.png"
         );
 
         given(registerService.register("user@example.com", "secret123", "device-1", "Pixel"))
@@ -146,7 +148,9 @@ class PublicAuthControllerTest {
                 UserId.of(userId),
                 Email.of("user@example.com"),
                 Role.USER,
-                Provider.MANUAL
+                Provider.MANUAL,
+                "Skater",
+                "https://example.com/avatar.png"
         );
 
         given(loginService.login("user@example.com", "secret123", "device-2", "MacBook"))
@@ -177,7 +181,9 @@ class PublicAuthControllerTest {
                 UserId.of(userId),
                 Email.of("user@example.com"),
                 Role.USER,
-                Provider.MANUAL
+                Provider.MANUAL,
+                "Skater",
+                "https://example.com/avatar.png"
         );
 
         given(refreshService.refresh("refresh-token", "device-3"))

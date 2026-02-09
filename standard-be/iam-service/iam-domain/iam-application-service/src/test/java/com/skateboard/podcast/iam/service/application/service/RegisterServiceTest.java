@@ -40,13 +40,20 @@ class RegisterServiceTest {
     @Test
     void registerRejectsDuplicateEmail() {
         final InMemoryUserRepository users = new InMemoryUserRepository();
+        final Instant now = Instant.now();
         users.save(new UserRepository.UserRecord(
                 UUID.randomUUID(),
                 Email.of("user@example.com"),
                 "hash:secret",
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                "Skater",
+                "skater",
+                null,
+                now,
+                now,
+                null
         ));
 
         final RegisterService service = new RegisterService(
@@ -206,6 +213,19 @@ class RegisterServiceTest {
             byId.put(user.id(), user);
             byEmail.put(user.email().value(), user.id());
             return user;
+        }
+
+        @Override
+        public java.util.List<UserRecord> findAll() {
+            return byId.values().stream().toList();
+        }
+
+        @Override
+        public void deleteById(final UUID id) {
+            final UserRecord removed = byId.remove(id);
+            if (removed != null) {
+                byEmail.remove(removed.email().value());
+            }
         }
     }
 }

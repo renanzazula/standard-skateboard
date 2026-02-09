@@ -48,6 +48,26 @@
         </dependency>
         <dependency>
             <groupId>com.skateboard.podcast</groupId>
+            <artifactId>settings-domain-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
+            <artifactId>settings-application-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
+            <artifactId>settings-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
+            <artifactId>settings-dataaccess</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.skateboard.podcast</groupId>
             <artifactId>iam-domain-core</artifactId>
             <version>${project.version}</version>
         </dependency>

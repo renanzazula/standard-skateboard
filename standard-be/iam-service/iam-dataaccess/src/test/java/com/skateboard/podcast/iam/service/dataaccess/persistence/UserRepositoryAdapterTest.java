@@ -18,6 +18,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,13 +51,20 @@ class UserRepositoryAdapterTest {
     @Test
     void saveAndFindByEmailAndId() {
         final UUID id = UUID.randomUUID();
+        final Instant now = Instant.now();
         final UserRecord record = new UserRecord(
                 id,
                 Email.of("user@example.com"),
                 "hashed",
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                "Skater",
+                "skater",
+                "https://example.com/avatar.png",
+                now,
+                now,
+                now
         );
 
         adapter.save(record);

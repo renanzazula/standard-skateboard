@@ -13,5 +13,7 @@ public record AuthResult(
         UserId userId,
         Email email,
         Role role,
-        Provider provider
+        Provider provider,
+        String name,
+        String avatarUrl
 ) {}

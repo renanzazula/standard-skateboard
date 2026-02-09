@@ -173,6 +173,38 @@ class NavigationConfigIntegrationTest {
         assertBadRequest(invalid);
     }
 
+    @Test
+    void navigationConfigUpdate_rejectsDisabledIndexTab() {
+        final NavigationConfig invalid = sampleConfig();
+        invalid.getTabs().stream()
+                .filter(tab -> "index".equals(tab.getId()))
+                .findFirst()
+                .ifPresent(tab -> tab.enabled(false));
+
+        assertBadRequest(invalid);
+    }
+
+    @Test
+    void navigationConfigUpdate_rejectsMissingIndexTab() {
+        final NavigationConfig invalid = new NavigationConfig()
+                .tabs(sampleConfig().getTabs().stream()
+                        .filter(tab -> !"index".equals(tab.getId()))
+                        .toList());
+
+        assertBadRequest(invalid);
+    }
+
+    @Test
+    void navigationConfigUpdate_rejectsSettingsNotSystem() {
+        final NavigationConfig invalid = sampleConfig();
+        invalid.getTabs().stream()
+                .filter(tab -> "settings".equals(tab.getId()))
+                .findFirst()
+                .ifPresent(tab -> tab.isSystem(false));
+
+        assertBadRequest(invalid);
+    }
+
     private NavigationConfig sampleConfig() {
         final NavigationTab events = new NavigationTab()
                 .id("index")

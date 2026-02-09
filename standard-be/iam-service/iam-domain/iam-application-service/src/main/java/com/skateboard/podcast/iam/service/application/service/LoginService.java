@@ -52,16 +52,32 @@ public class LoginService implements LoginUseCase {
             throw new UnauthorizedException("invalid credentials");
         }
 
-        final String access = tokenProvider.createAccessToken(
+        final Instant now = Instant.now();
+        final var updatedUser = new UserRepository.UserRecord(
                 user.id(),
-                user.role().name(),
-                user.email().value()
+                user.email(),
+                user.passwordHash(),
+                user.role(),
+                user.provider(),
+                user.status(),
+                user.name(),
+                user.username(),
+                user.avatarUrl(),
+                user.createdAt(),
+                now,
+                now
+        );
+        userRepository.save(updatedUser);
+
+        final String access = tokenProvider.createAccessToken(
+                updatedUser.id(),
+                updatedUser.role().name(),
+                updatedUser.email().value()
         );
 
         final String rawRefresh = tokenProvider.newRefreshToken();
         final String refreshHash = tokenProvider.hashRefreshToken(rawRefresh);
 
-        final Instant now = Instant.now();
         final Instant refreshExp = now.plusSeconds(tokenProvider.refreshTtlSeconds());
 
         // v1 simple: new family per login (you can switch to "per device family" later)
@@ -69,7 +85,7 @@ public class LoginService implements LoginUseCase {
 
         refreshTokenRepository.save(new RefreshTokenRepository.RefreshTokenRecord(
                 UUID.randomUUID(),
-                user.id(),
+                updatedUser.id(),
                 refreshHash,
                 familyId,
                 deviceId,
@@ -86,10 +102,12 @@ public class LoginService implements LoginUseCase {
                 tokenProvider.accessTtlSeconds(),
                 rawRefresh,
                 tokenProvider.refreshTtlSeconds(),
-                UserId.of(user.id()),
-                user.email(),
-                user.role(),
-                user.provider()
+                UserId.of(updatedUser.id()),
+                updatedUser.email(),
+                updatedUser.role(),
+                updatedUser.provider(),
+                updatedUser.name(),
+                updatedUser.avatarUrl()
         );
     }
 }

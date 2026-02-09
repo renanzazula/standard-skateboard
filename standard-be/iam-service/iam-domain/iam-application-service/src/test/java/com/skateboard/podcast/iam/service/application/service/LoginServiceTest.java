@@ -60,13 +60,20 @@ class LoginServiceTest {
                 new FakeTokenProvider(900, 3600)
         );
 
+        final Instant now = Instant.now();
         users.save(new UserRepository.UserRecord(
                 UUID.randomUUID(),
                 Email.of("user@example.com"),
                 "hash:secret",
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.DISABLED
+                UserStatus.DISABLED,
+                "Skater",
+                "skater",
+                null,
+                now,
+                now,
+                null
         ));
 
         assertThrows(UnauthorizedException.class, () -> service.login("user@example.com", "secret", "device", "phone"));
@@ -82,13 +89,20 @@ class LoginServiceTest {
                 new FakeTokenProvider(900, 3600)
         );
 
+        final Instant now = Instant.now();
         users.save(new UserRepository.UserRecord(
                 UUID.randomUUID(),
                 Email.of("user@example.com"),
                 "hash:secret",
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                "Skater",
+                "skater",
+                null,
+                now,
+                now,
+                null
         ));
 
         assertThrows(UnauthorizedException.class, () -> service.login("user@example.com", "wrong", "device", "phone"));
@@ -107,13 +121,20 @@ class LoginServiceTest {
         );
 
         final UUID userId = UUID.randomUUID();
+        final Instant now = Instant.now();
         users.save(new UserRepository.UserRecord(
                 userId,
                 Email.of("user@example.com"),
                 "hash:secret",
                 Role.USER,
                 Provider.MANUAL,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                "Skater",
+                "skater",
+                null,
+                now,
+                now,
+                null
         ));
 
         final AuthResult result = service.login("user@example.com", "secret", "device-1", "phone");
@@ -247,6 +268,19 @@ class LoginServiceTest {
             byId.put(user.id(), user);
             byEmail.put(user.email().value(), user.id());
             return user;
+        }
+
+        @Override
+        public java.util.List<UserRecord> findAll() {
+            return byId.values().stream().toList();
+        }
+
+        @Override
+        public void deleteById(final UUID id) {
+            final UserRecord removed = byId.remove(id);
+            if (removed != null) {
+                byEmail.remove(removed.email().value());
+            }
         }
     }
 }

@@ -79,13 +79,20 @@ public class SocialLoginService implements SocialLoginUseCase {
     }
 
     private UserRepository.UserRecord createSocialUser(final Email email, final Provider provider) {
+        final Instant now = Instant.now();
         final var user = new UserRepository.UserRecord(
                 UUID.randomUUID(),
                 email,
                 null,
                 Role.USER,
                 provider,
-                UserStatus.ACTIVE
+                UserStatus.ACTIVE,
+                null,
+                null,
+                null,
+                now,
+                now,
+                null
         );
         return userRepository.save(user);
     }
@@ -95,22 +102,38 @@ public class SocialLoginService implements SocialLoginUseCase {
             final String deviceId,
             final String deviceName
     ) {
-        final String access = tokenProvider.createAccessToken(
+        final Instant now = Instant.now();
+        final var updatedUser = new UserRepository.UserRecord(
                 user.id(),
-                user.role().name(),
-                user.email().value()
+                user.email(),
+                user.passwordHash(),
+                user.role(),
+                user.provider(),
+                user.status(),
+                user.name(),
+                user.username(),
+                user.avatarUrl(),
+                user.createdAt(),
+                now,
+                now
+        );
+        userRepository.save(updatedUser);
+
+        final String access = tokenProvider.createAccessToken(
+                updatedUser.id(),
+                updatedUser.role().name(),
+                updatedUser.email().value()
         );
 
         final String rawRefresh = tokenProvider.newRefreshToken();
         final String refreshHash = tokenProvider.hashRefreshToken(rawRefresh);
 
-        final Instant now = Instant.now();
         final Instant refreshExp = now.plusSeconds(tokenProvider.refreshTtlSeconds());
         final UUID familyId = UUID.randomUUID();
 
         refreshTokenRepository.save(new RefreshTokenRepository.RefreshTokenRecord(
                 UUID.randomUUID(),
-                user.id(),
+                updatedUser.id(),
                 refreshHash,
                 familyId,
                 deviceId,
@@ -127,10 +150,12 @@ public class SocialLoginService implements SocialLoginUseCase {
                 tokenProvider.accessTtlSeconds(),
                 rawRefresh,
                 tokenProvider.refreshTtlSeconds(),
-                UserId.of(user.id()),
-                user.email(),
-                user.role(),
-                user.provider()
+                UserId.of(updatedUser.id()),
+                updatedUser.email(),
+                updatedUser.role(),
+                updatedUser.provider(),
+                updatedUser.name(),
+                updatedUser.avatarUrl()
         );
     }
 }

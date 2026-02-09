@@ -1,4 +1,4 @@
-package com.skateboard.podcast.feed.service.events.application.adapter.in.rest;
+package com.skateboard.podcast.feed.service.application.adapter.in.rest;
 
 import com.skateboard.podcast.feed.service.events.application.port.in.PublicFeedEventsUseCase;
 import com.skateboard.podcast.standardbe.api.PublicEventsApi;
