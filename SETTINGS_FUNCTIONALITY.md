@@ -19,6 +19,8 @@ The settings system provides role-based configuration management with three dist
 - **Standard User**: Authenticated users with basic settings
 - **Admin**: Full access to system configuration and user management
 
+Role values used by the backend: `GUEST`, `USER`, `ADMIN`.
+
 **Main Entry Point**: `/settings` (Tab Navigation)
 
 ---
@@ -239,7 +241,7 @@ Settings → User Management → View All Users → [Filter/Search/Edit/Disable/
     - Avatar/Icon
     - Name/Username
     - Email
-    - Role (Admin/Standard)
+    - Role (Admin/User)
     - Status (Active/Disabled)
     - Provider (Google/Apple/Manual)
     - Created Date
@@ -263,7 +265,7 @@ const { users } = useUserManagement();
 - Username
 
 **Filters**:
-- **Role Filter**: All, Admin, Standard
+- **Role Filter**: All, Admin, User
 - **Status Filter**: All, Active, Disabled
 
 **Flow**:
@@ -307,7 +309,7 @@ const filteredUsers = useMemo(() => {
 **Editable Fields**:
 - Name
 - Username
-- Role (Admin/Standard)
+- Role (Admin/User)
 
 **API Functions**:
 ```typescript
@@ -315,7 +317,7 @@ const filteredUsers = useMemo(() => {
 await updateUser(userId: string, updates: {
   name?: string;
   username?: string;
-  role?: 'admin' | 'standard';
+  role?: 'ADMIN' | 'USER';
 })
 
 // Context: UserManagementContext
@@ -795,7 +797,7 @@ interface NavigationTab {
 ```
 
 **System Tabs** (cannot be deleted):
-- home
+- index
 - feed
 - skate-square
 - podcast
@@ -1275,7 +1277,7 @@ App Root
 - **Flow**:
     1. Admin taps filter button
     2. System opens filter modal
-    3. Admin selects role filter (All/Admin/Standard)
+    3. Admin selects role filter (All/Admin/User)
     4. Admin selects status filter (All/Active/Disabled)
     5. Admin closes modal
     6. System applies filters
@@ -1515,7 +1517,7 @@ App Root
 ## Security Considerations
 
 ### Access Control
-1. **Role-Based Access**: Admin routes check `user.role === 'admin'`
+1. **Role-Based Access**: Admin routes check `user.role === 'ADMIN'`
 2. **Route Protection**: Authenticated routes redirect to login
 3. **Session Management**: Automatic logout on timeout
 4. **User Status**: Disabled users blocked during authentication

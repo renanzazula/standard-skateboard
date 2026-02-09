@@ -49,6 +49,9 @@ EXPO_PUBLIC_EVENTS_URL=wss://api.example.com/ws/events
 }
 ```
 
+Note: auth responses return a user summary without `username`. Use `GET /users/me`
+to hydrate `username` and `avatarUrl` for profile screens.
+
 ### Public auth endpoints
 
 - `POST /public/auth/login`
@@ -99,6 +102,11 @@ EXPO_PUBLIC_EVENTS_URL=wss://api.example.com/ws/events
 
 - Roles: `GUEST`, `USER`, `ADMIN`
 - Providers: `MANUAL`, `GOOGLE`, `APPLE`, `FACEBOOK`, `PASSCODE`
+
+## User Profile
+
+- `GET /users/me` returns the full profile (includes `username`).
+- `PUT /users/me` updates `name`, `username`, or `avatarUrl` (auth required).
 
 ## Events API
 

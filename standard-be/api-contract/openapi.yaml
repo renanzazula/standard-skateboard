@@ -126,7 +126,7 @@ components:
 
     SocialLoginRequest:
       type: object
-      required: [ provider, device ]
+      required: [ provider, token, device ]
       properties:
         provider: { $ref: '#/components/schemas/Provider' }
         token: { type: string }
