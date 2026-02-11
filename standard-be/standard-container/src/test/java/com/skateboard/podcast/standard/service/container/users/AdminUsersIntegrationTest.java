@@ -1,11 +1,12 @@
 package com.skateboard.podcast.standard.service.container.users;
 
-import com.skateboard.podcast.standardbe.api.model.AdminPasscodeLoginRequest;
 import com.skateboard.podcast.standardbe.api.model.AdminUser;
 import com.skateboard.podcast.standardbe.api.model.AdminUserStatusUpdateRequest;
 import com.skateboard.podcast.standardbe.api.model.AdminUserUpdateRequest;
 import com.skateboard.podcast.standardbe.api.model.AuthResponse;
 import com.skateboard.podcast.standardbe.api.model.DeviceInfo;
+import com.skateboard.podcast.standardbe.api.model.LoginRequest;
+import com.skateboard.podcast.standardbe.api.model.Provider;
 import com.skateboard.podcast.standardbe.api.model.RegisterRequest;
 import com.skateboard.podcast.standardbe.api.model.Role;
 import com.skateboard.podcast.standardbe.api.model.UserStatus;
@@ -142,12 +143,14 @@ class AdminUsersIntegrationTest {
                 .deviceId("test-device")
                 .deviceName("integration")
                 .platform(DeviceInfo.PlatformEnum.WEB);
-        final AdminPasscodeLoginRequest request = new AdminPasscodeLoginRequest()
-                .passcode("admin123")
+        final LoginRequest request = new LoginRequest()
+                .provider(Provider.MANUAL)
+                .email("admin@example.com")
+                .password("admin123")
                 .device(deviceInfo);
 
         final ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                url("/public/auth/admin-passcode"),
+                url("/public/auth/login"),
                 request,
                 AuthResponse.class
         );

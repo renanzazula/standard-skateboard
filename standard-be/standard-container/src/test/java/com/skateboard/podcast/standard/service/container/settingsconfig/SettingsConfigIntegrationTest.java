@@ -1,16 +1,17 @@
 package com.skateboard.podcast.standard.service.container.settingsconfig;
 
-import com.skateboard.podcast.standardbe.api.model.AdminPasscodeLoginRequest;
 import com.skateboard.podcast.standardbe.api.model.AuthResponse;
 import com.skateboard.podcast.standardbe.api.model.DeviceInfo;
 import com.skateboard.podcast.standardbe.api.model.Language;
 import com.skateboard.podcast.standardbe.api.model.LanguageConfig;
+import com.skateboard.podcast.standardbe.api.model.LoginRequest;
 import com.skateboard.podcast.standardbe.api.model.ProfileConfig;
+import com.skateboard.podcast.standardbe.api.model.Provider;
 import com.skateboard.podcast.standardbe.api.model.ServiceMode;
 import com.skateboard.podcast.standardbe.api.model.SessionConfig;
 import com.skateboard.podcast.standardbe.api.model.SettingsAuthMethods;
-import com.skateboard.podcast.standardbe.api.model.SettingsConfig;
 import com.skateboard.podcast.standardbe.api.model.SettingsServiceModes;
+import com.skateboard.podcast.settings.service.application.adapter.in.rest.AdminSettingsConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,32 +60,33 @@ class SettingsConfigIntegrationTest {
 
     @Test
     void settingsConfigRestFlow_updatesAndReads() {
-        final ResponseEntity<SettingsConfig> initial = restTemplate.getForEntity(
+        final ResponseEntity<AdminSettingsConfig> initial = restTemplate.getForEntity(
                 url("/public/settings-config"),
-                SettingsConfig.class
+                AdminSettingsConfig.class
         );
         assertEquals(HttpStatus.OK, initial.getStatusCode());
         assertNotNull(initial.getBody());
-        assertNotNull(initial.getBody().getEnabledAuthMethods());
-        assertEquals(Boolean.TRUE, initial.getBody().getEnabledAuthMethods().getManual());
+        assertNotNull(initial.getBody().getAuthMethods());
+        assertEquals(Boolean.TRUE, initial.getBody().getAuthMethods().getManual());
+        assertNotNull(initial.getBody().getFeedRealtimeEnabled());
 
         final String token = adminToken();
-        final SettingsConfig updatedConfig = sampleConfig();
+        final AdminSettingsConfig updatedConfig = sampleConfig();
 
-        final ResponseEntity<SettingsConfig> updated = restTemplate.exchange(
-                url("/admin/settings-config"),
+        final ResponseEntity<AdminSettingsConfig> updated = restTemplate.exchange(
+                url("/admin/admin-settings"),
                 HttpMethod.PUT,
                 new HttpEntity<>(updatedConfig, authHeaders(token)),
-                SettingsConfig.class
+                AdminSettingsConfig.class
         );
         assertEquals(HttpStatus.OK, updated.getStatusCode());
         assertNotNull(updated.getBody());
-        assertEquals(Boolean.TRUE, updated.getBody().getEnabledAuthMethods().getGoogle());
-        assertEquals(ServiceMode.REAL, updated.getBody().getServiceModes().getGoogle());
+        assertEquals(Boolean.TRUE, updated.getBody().getAuthMethods().getGoogle());
+        assertEquals(ServiceMode.REAL, updated.getBody().getAuthServiceModes().getGoogle());
 
-        final ResponseEntity<SettingsConfig> after = restTemplate.getForEntity(
+        final ResponseEntity<AdminSettingsConfig> after = restTemplate.getForEntity(
                 url("/public/settings-config"),
-                SettingsConfig.class
+                AdminSettingsConfig.class
         );
         assertEquals(HttpStatus.OK, after.getStatusCode());
         assertNotNull(after.getBody());
@@ -92,7 +94,7 @@ class SettingsConfigIntegrationTest {
         assertEquals("pt", after.getBody().getLanguageConfig().getDefaultLanguage().getCode());
     }
 
-    private SettingsConfig sampleConfig() {
+    private AdminSettingsConfig sampleConfig() {
         final SettingsAuthMethods authMethods = new SettingsAuthMethods()
                 .google(true)
                 .apple(false)
@@ -126,12 +128,13 @@ class SettingsConfigIntegrationTest {
                 .avatarMaxSizeMB(6)
                 .allowedAvatarFormats(List.of("image/png", "image/jpeg"));
 
-        return new SettingsConfig()
-                .enabledAuthMethods(authMethods)
-                .serviceModes(serviceModes)
+        return new AdminSettingsConfig()
+                .authMethods(authMethods)
+                .authServiceModes(serviceModes)
                 .sessionConfig(sessionConfig)
                 .languageConfig(languageConfig)
-                .profileConfig(profileConfig);
+                .profileConfig(profileConfig)
+                .feedRealtimeEnabled(true);
     }
 
     private String url(final String path) {
@@ -150,12 +153,14 @@ class SettingsConfigIntegrationTest {
                 .deviceId("test-device")
                 .deviceName("integration")
                 .platform(DeviceInfo.PlatformEnum.WEB);
-        final AdminPasscodeLoginRequest request = new AdminPasscodeLoginRequest()
-                .passcode("admin123")
+        final LoginRequest request = new LoginRequest()
+                .provider(Provider.MANUAL)
+                .email("admin@example.com")
+                .password("admin123")
                 .device(deviceInfo);
 
         final ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                url("/public/auth/admin-passcode"),
+                url("/public/auth/login"),
                 request,
                 AuthResponse.class
         );

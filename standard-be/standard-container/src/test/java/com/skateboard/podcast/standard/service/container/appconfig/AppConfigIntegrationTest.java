@@ -2,10 +2,11 @@ package com.skateboard.podcast.standard.service.container.appconfig;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skateboard.podcast.standardbe.api.model.AdminPasscodeLoginRequest;
 import com.skateboard.podcast.standardbe.api.model.AppConfig;
 import com.skateboard.podcast.standardbe.api.model.AuthResponse;
 import com.skateboard.podcast.standardbe.api.model.DeviceInfo;
+import com.skateboard.podcast.standardbe.api.model.LoginRequest;
+import com.skateboard.podcast.standardbe.api.model.Provider;
 import com.skateboard.podcast.standardbe.api.model.SplashConfig;
 import com.skateboard.podcast.standardbe.api.model.SplashMediaType;
 import org.junit.jupiter.api.Test;
@@ -161,12 +162,14 @@ class AppConfigIntegrationTest {
                 .deviceId("test-device")
                 .deviceName("integration")
                 .platform(DeviceInfo.PlatformEnum.WEB);
-        final AdminPasscodeLoginRequest request = new AdminPasscodeLoginRequest()
-                .passcode("admin123")
+        final LoginRequest request = new LoginRequest()
+                .provider(Provider.MANUAL)
+                .email("admin@example.com")
+                .password("admin123")
                 .device(deviceInfo);
 
         final ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                url("/public/auth/admin-passcode"),
+                url("/public/auth/login"),
                 request,
                 AuthResponse.class
         );

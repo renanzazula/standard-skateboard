@@ -34,6 +34,19 @@ public class SettingsConfigApiMapper {
                 .profileConfig(toApi(view.profileConfig()));
     }
 
+    public AdminSettingsConfig toAdminApi(final SettingsConfigView view) {
+        if (view == null) {
+            return null;
+        }
+        return new AdminSettingsConfig()
+                .authMethods(toApi(view.enabledAuthMethods()))
+                .authServiceModes(toApi(view.serviceModes()))
+                .sessionConfig(toApi(view.sessionConfig()))
+                .languageConfig(toApi(view.languageConfig()))
+                .profileConfig(toApi(view.profileConfig()))
+                .feedRealtimeEnabled(view.feedRealtimeEnabled());
+    }
+
     public SettingsConfigView toView(final SettingsConfig api) {
         if (api == null) {
             return null;
@@ -43,7 +56,22 @@ public class SettingsConfigApiMapper {
                 toView(api.getServiceModes()),
                 toView(api.getSessionConfig()),
                 toView(api.getLanguageConfig()),
-                toView(api.getProfileConfig())
+                toView(api.getProfileConfig()),
+                null
+        );
+    }
+
+    public SettingsConfigView toView(final AdminSettingsConfig api) {
+        if (api == null) {
+            return null;
+        }
+        return new SettingsConfigView(
+                toView(api.getAuthMethods()),
+                toView(api.getAuthServiceModes()),
+                toView(api.getSessionConfig()),
+                toView(api.getLanguageConfig()),
+                toView(api.getProfileConfig()),
+                api.getFeedRealtimeEnabled()
         );
     }
 

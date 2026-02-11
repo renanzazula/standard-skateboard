@@ -17,14 +17,17 @@ public class WebSocketFeedEventPublisher implements FeedEventPublisher {
     private static final Logger log = LoggerFactory.getLogger(WebSocketFeedEventPublisher.class);
     private static final int VERSION = 1;
 
-    private final FeedWebSocketHandler handler;
+    private final FeedWebSocketHandler feedHandler;
+    private final EventsWebSocketHandler eventsHandler;
     private final ObjectMapper objectMapper;
 
     public WebSocketFeedEventPublisher(
-            final FeedWebSocketHandler handler,
+            final FeedWebSocketHandler feedHandler,
+            final EventsWebSocketHandler eventsHandler,
             final ObjectMapper objectMapper
     ) {
-        this.handler = handler;
+        this.feedHandler = feedHandler;
+        this.eventsHandler = eventsHandler;
         this.objectMapper = objectMapper;
     }
 
@@ -55,7 +58,9 @@ public class WebSocketFeedEventPublisher implements FeedEventPublisher {
         message.put("timestamp", Instant.now().toString());
         message.put("payload", payload);
         try {
-            handler.broadcast(objectMapper.writeValueAsString(message));
+            final String encoded = objectMapper.writeValueAsString(message);
+            feedHandler.broadcast(encoded);
+            eventsHandler.broadcast(encoded);
         } catch (final Exception e) {
             log.warn("Failed to publish feed event {}", type, e);
         }

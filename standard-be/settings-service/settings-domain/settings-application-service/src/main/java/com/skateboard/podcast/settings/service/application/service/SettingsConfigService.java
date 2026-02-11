@@ -11,6 +11,7 @@ import com.skateboard.podcast.settings.service.application.dto.SettingsAuthMetho
 import com.skateboard.podcast.settings.service.application.dto.SettingsConfigView;
 import com.skateboard.podcast.settings.service.application.dto.SettingsServiceModesView;
 import com.skateboard.podcast.settings.service.application.port.in.SettingsConfigUseCase;
+import com.skateboard.podcast.settings.service.application.port.out.SettingsConfigEventPublisher;
 import com.skateboard.podcast.settings.service.application.port.out.SettingsConfigRepository;
 
 import java.time.Instant;
@@ -27,13 +28,16 @@ public class SettingsConfigService implements SettingsConfigUseCase {
 
     private final SettingsConfigRepository repository;
     private final ObjectMapper objectMapper;
+    private final SettingsConfigEventPublisher eventPublisher;
 
     public SettingsConfigService(
             final SettingsConfigRepository repository,
-            final ObjectMapper objectMapper
+            final ObjectMapper objectMapper,
+            final SettingsConfigEventPublisher eventPublisher
     ) {
         this.repository = repository;
         this.objectMapper = objectMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -48,6 +52,7 @@ public class SettingsConfigService implements SettingsConfigUseCase {
         final SettingsConfigRepository.SettingsConfigRecord saved = repository.save(
                 toRecord(existing.id(), updated, existing.updatedAt())
         );
+        eventPublisher.publishSettingsUpdated(Instant.now());
         return toView(saved);
     }
 
@@ -79,7 +84,8 @@ public class SettingsConfigService implements SettingsConfigUseCase {
                         30,
                         5,
                         List.of("image/png", "image/jpeg", "image/jpg", "image/svg+xml")
-                )
+                ),
+                true
         );
     }
 
@@ -174,6 +180,10 @@ public class SettingsConfigService implements SettingsConfigUseCase {
         for (final String format : profileConfig.allowedAvatarFormats()) {
             normalizeRequired(format, "profileConfig.allowedAvatarFormats");
         }
+
+        if (config.feedRealtimeEnabled() == null) {
+            throw new ValidationException("feedRealtimeEnabled cannot be null");
+        }
     }
 
     private static void validateMode(final String mode, final String fieldName) {
@@ -211,7 +221,18 @@ public class SettingsConfigService implements SettingsConfigUseCase {
             return defaultConfig();
         }
         try {
-            return objectMapper.readValue(record.configJson(), SettingsConfigView.class);
+            final SettingsConfigView parsed = objectMapper.readValue(record.configJson(), SettingsConfigView.class);
+            if (parsed.feedRealtimeEnabled() == null) {
+                return new SettingsConfigView(
+                        parsed.enabledAuthMethods(),
+                        parsed.serviceModes(),
+                        parsed.sessionConfig(),
+                        parsed.languageConfig(),
+                        parsed.profileConfig(),
+                        true
+                );
+            }
+            return parsed;
         } catch (final JsonProcessingException e) {
             throw new ValidationException("invalid stored settings config");
         }

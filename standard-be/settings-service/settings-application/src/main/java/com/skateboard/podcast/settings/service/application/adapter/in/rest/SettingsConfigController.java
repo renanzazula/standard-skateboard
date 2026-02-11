@@ -1,20 +1,21 @@
 package com.skateboard.podcast.settings.service.application.adapter.in.rest;
 
 import com.skateboard.podcast.settings.service.application.port.in.SettingsConfigUseCase;
+import com.skateboard.podcast.settings.service.application.dto.SettingsConfigView;
 import com.skateboard.podcast.standardbe.api.AdminSettingsConfigApi;
-import com.skateboard.podcast.standardbe.api.PublicSettingsConfigApi;
 import com.skateboard.podcast.standardbe.api.model.SettingsConfig;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.NativeWebRequest;
 
 import java.util.Optional;
 
 @RestController
-public class SettingsConfigController implements PublicSettingsConfigApi, AdminSettingsConfigApi {
+public class SettingsConfigController implements AdminSettingsConfigApi {
 
     private final SettingsConfigUseCase settingsConfigUseCase;
     private final SettingsConfigApiMapper mapper;
@@ -32,13 +33,28 @@ public class SettingsConfigController implements PublicSettingsConfigApi, AdminS
         return Optional.empty();
     }
 
-    @Override
     @GetMapping(
             value = "/public/settings-config",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<SettingsConfig> publicSettingsConfigGet() {
-        return ResponseEntity.ok(mapper.toApi(settingsConfigUseCase.get()));
+    public ResponseEntity<AdminSettingsConfig> publicSettingsConfigGet() {
+        return ResponseEntity.ok(mapper.toAdminApi(settingsConfigUseCase.get()));
+    }
+
+    @GetMapping(
+            value = "/public/admin-settings",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<AdminSettingsConfig> publicAdminSettingsGet() {
+        return ResponseEntity.ok(mapper.toAdminApi(settingsConfigUseCase.get()));
+    }
+
+    @GetMapping(
+            value = "/admin/admin-settings",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<AdminSettingsConfig> adminSettingsGet() {
+        return ResponseEntity.ok(mapper.toAdminApi(settingsConfigUseCase.get()));
     }
 
     @Override
@@ -57,7 +73,29 @@ public class SettingsConfigController implements PublicSettingsConfigApi, AdminS
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<SettingsConfig> adminSettingsConfigUpdate(final SettingsConfig settingsConfig) {
-        final var updated = settingsConfigUseCase.update(mapper.toView(settingsConfig));
+        final SettingsConfigView current = settingsConfigUseCase.get();
+        final SettingsConfigView incoming = mapper.toView(settingsConfig);
+        final SettingsConfigView merged = new SettingsConfigView(
+                incoming.enabledAuthMethods(),
+                incoming.serviceModes(),
+                incoming.sessionConfig(),
+                incoming.languageConfig(),
+                incoming.profileConfig(),
+                current.feedRealtimeEnabled()
+        );
+        final var updated = settingsConfigUseCase.update(merged);
         return ResponseEntity.ok(mapper.toApi(updated));
+    }
+
+    @PutMapping(
+            value = "/admin/admin-settings",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<AdminSettingsConfig> adminSettingsUpdate(
+            @RequestBody final AdminSettingsConfig settingsConfig
+    ) {
+        final var updated = settingsConfigUseCase.update(mapper.toView(settingsConfig));
+        return ResponseEntity.ok(mapper.toAdminApi(updated));
     }
 }

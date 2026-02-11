@@ -2,7 +2,6 @@ package com.skateboard.podcast.standard.service.container.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skateboard.podcast.standardbe.api.model.AdminPasscodeLoginRequest;
 import com.skateboard.podcast.standardbe.api.model.AuthResponse;
 import com.skateboard.podcast.standardbe.api.model.BlockType;
 import com.skateboard.podcast.standardbe.api.model.CreateEventRequest;
@@ -10,8 +9,10 @@ import com.skateboard.podcast.standardbe.api.model.DeviceInfo;
 import com.skateboard.podcast.standardbe.api.model.EventDetails;
 import com.skateboard.podcast.standardbe.api.model.EventStatus;
 import com.skateboard.podcast.standardbe.api.model.ImageRef;
+import com.skateboard.podcast.standardbe.api.model.LoginRequest;
 import com.skateboard.podcast.standardbe.api.model.PageEventSummary;
 import com.skateboard.podcast.standardbe.api.model.ParagraphBlock;
+import com.skateboard.podcast.standardbe.api.model.Provider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -194,12 +195,14 @@ class EventsIntegrationTest {
                 .deviceId("test-device")
                 .deviceName("integration")
                 .platform(DeviceInfo.PlatformEnum.WEB);
-        final AdminPasscodeLoginRequest request = new AdminPasscodeLoginRequest()
-                .passcode("admin123")
+        final LoginRequest request = new LoginRequest()
+                .provider(Provider.MANUAL)
+                .email("admin@example.com")
+                .password("admin123")
                 .device(deviceInfo);
 
         final ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                url("/public/auth/admin-passcode"),
+                url("/public/auth/login"),
                 request,
                 AuthResponse.class
         );

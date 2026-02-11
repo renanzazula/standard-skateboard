@@ -5,6 +5,7 @@ import com.skateboard.podcast.feed.service.events.application.dto.FeedEventEvent
 import com.skateboard.podcast.feed.service.events.application.port.out.FeedEventsEventPublisher;
 import com.skateboard.podcast.appconfig.service.application.port.out.AppConfigEventPublisher;
 import com.skateboard.podcast.appconfig.service.application.port.out.NavigationConfigEventPublisher;
+import com.skateboard.podcast.settings.service.application.port.out.SettingsConfigEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
-public class WebSocketFeedEventsEventPublisher implements FeedEventsEventPublisher, AppConfigEventPublisher, NavigationConfigEventPublisher {
+public class WebSocketFeedEventsEventPublisher implements FeedEventsEventPublisher, AppConfigEventPublisher, NavigationConfigEventPublisher, SettingsConfigEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketFeedEventsEventPublisher.class);
     private static final int VERSION = 1;
@@ -62,6 +63,13 @@ public class WebSocketFeedEventsEventPublisher implements FeedEventsEventPublish
         final Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("updatedAt", (updatedAt == null ? Instant.now() : updatedAt).toString());
         broadcast("navigation.updated", payload);
+    }
+
+    @Override
+    public void publishSettingsUpdated(final Instant updatedAt) {
+        final Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("updatedAt", (updatedAt == null ? Instant.now() : updatedAt).toString());
+        broadcast("settings.updated", payload);
     }
 
     private void broadcast(final String type, final Map<String, Object> payload) {

@@ -2,11 +2,12 @@ package com.skateboard.podcast.standard.service.container.navigationconfig;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skateboard.podcast.standardbe.api.model.AdminPasscodeLoginRequest;
 import com.skateboard.podcast.standardbe.api.model.AuthResponse;
 import com.skateboard.podcast.standardbe.api.model.DeviceInfo;
+import com.skateboard.podcast.standardbe.api.model.LoginRequest;
 import com.skateboard.podcast.standardbe.api.model.NavigationConfig;
 import com.skateboard.podcast.standardbe.api.model.NavigationTab;
+import com.skateboard.podcast.standardbe.api.model.Provider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -71,8 +72,20 @@ class NavigationConfigIntegrationTest {
 
     @Test
     void navigationConfigRestFlow_updatesAndReads() {
-        final ResponseEntity<NavigationConfig> initial = restTemplate.getForEntity(
+        final ResponseEntity<NavigationConfig> guestInitial = restTemplate.getForEntity(
                 url("/public/navigation-config"),
+                NavigationConfig.class
+        );
+        assertEquals(HttpStatus.OK, guestInitial.getStatusCode());
+        assertNotNull(guestInitial.getBody());
+        assertNotNull(guestInitial.getBody().getTabs());
+        assertEquals(0, guestInitial.getBody().getTabs().size());
+
+        final String token = adminToken();
+        final ResponseEntity<NavigationConfig> initial = restTemplate.exchange(
+                url("/public/navigation-config"),
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token)),
                 NavigationConfig.class
         );
         assertEquals(HttpStatus.OK, initial.getStatusCode());
@@ -80,8 +93,6 @@ class NavigationConfigIntegrationTest {
         assertNotNull(initial.getBody().getTabs());
         assertTrue(initial.getBody().getTabs().stream()
                 .anyMatch(tab -> "settings".equals(tab.getId()) && Boolean.TRUE.equals(tab.getEnabled())));
-
-        final String token = adminToken();
         final NavigationConfig updatedConfig = sampleConfig();
 
         final ResponseEntity<NavigationConfig> updated = restTemplate.exchange(
@@ -94,8 +105,10 @@ class NavigationConfigIntegrationTest {
         assertNotNull(updated.getBody());
         assertTabsMatch(sampleConfig().getTabs(), updated.getBody().getTabs());
 
-        final ResponseEntity<NavigationConfig> after = restTemplate.getForEntity(
+        final ResponseEntity<NavigationConfig> after = restTemplate.exchange(
                 url("/public/navigation-config"),
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token)),
                 NavigationConfig.class
         );
         assertEquals(HttpStatus.OK, after.getStatusCode());
@@ -286,12 +299,14 @@ class NavigationConfigIntegrationTest {
                 .deviceId("test-device")
                 .deviceName("integration")
                 .platform(DeviceInfo.PlatformEnum.WEB);
-        final AdminPasscodeLoginRequest request = new AdminPasscodeLoginRequest()
-                .passcode("admin123")
+        final LoginRequest request = new LoginRequest()
+                .provider(Provider.MANUAL)
+                .email("admin@example.com")
+                .password("admin123")
                 .device(deviceInfo);
 
         final ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                url("/public/auth/admin-passcode"),
+                url("/public/auth/login"),
                 request,
                 AuthResponse.class
         );

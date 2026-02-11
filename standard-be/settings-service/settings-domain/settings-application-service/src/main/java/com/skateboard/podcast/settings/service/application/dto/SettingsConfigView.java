@@ -5,5 +5,6 @@ public record SettingsConfigView(
         SettingsServiceModesView serviceModes,
         SessionConfigView sessionConfig,
         LanguageConfigView languageConfig,
-        ProfileConfigView profileConfig
+        ProfileConfigView profileConfig,
+        Boolean feedRealtimeEnabled
 ) {}

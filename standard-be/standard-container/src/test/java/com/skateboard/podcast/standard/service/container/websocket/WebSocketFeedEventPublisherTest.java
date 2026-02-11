@@ -21,12 +21,16 @@ import static org.mockito.Mockito.verify;
 class WebSocketFeedEventPublisherTest {
 
     @Mock
-    private FeedWebSocketHandler handler;
+    private FeedWebSocketHandler feedHandler;
+
+    @Mock
+    private EventsWebSocketHandler eventsHandler;
 
     @Test
     void publishPostEvent_emitsExpectedJson() throws Exception {
         final ObjectMapper objectMapper = new ObjectMapper();
-        final WebSocketFeedEventPublisher publisher = new WebSocketFeedEventPublisher(handler, objectMapper);
+        final WebSocketFeedEventPublisher publisher =
+                new WebSocketFeedEventPublisher(feedHandler, eventsHandler, objectMapper);
 
         final UUID postId = UUID.randomUUID();
         final PostEvent event = new PostEvent(
@@ -39,7 +43,8 @@ class WebSocketFeedEventPublisherTest {
         publisher.publishPostEvent(event);
 
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(handler, times(1)).broadcast(captor.capture());
+        verify(feedHandler, times(1)).broadcast(captor.capture());
+        verify(eventsHandler, times(1)).broadcast(captor.capture());
 
         final JsonNode json = objectMapper.readTree(captor.getValue());
         assertEquals("post.updated", json.get("type").asText());
@@ -53,13 +58,15 @@ class WebSocketFeedEventPublisherTest {
     @Test
     void publishFeedUpdated_emitsExpectedJson() throws Exception {
         final ObjectMapper objectMapper = new ObjectMapper();
-        final WebSocketFeedEventPublisher publisher = new WebSocketFeedEventPublisher(handler, objectMapper);
+        final WebSocketFeedEventPublisher publisher =
+                new WebSocketFeedEventPublisher(feedHandler, eventsHandler, objectMapper);
 
         final Instant updatedAt = Instant.parse("2024-02-01T10:00:00Z");
         publisher.publishFeedUpdated(updatedAt);
 
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(handler, times(1)).broadcast(captor.capture());
+        verify(feedHandler, times(1)).broadcast(captor.capture());
+        verify(eventsHandler, times(1)).broadcast(captor.capture());
 
         final JsonNode json = objectMapper.readTree(captor.getValue());
         assertEquals("feed.updated", json.get("type").asText());
